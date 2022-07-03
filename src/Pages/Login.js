@@ -5,6 +5,8 @@ import {
     increaseCounter,
     decreaseCounter,
   } from "../redux/Counter/counter.actions"
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faGoogle } from '@fortawesome/free-brands-svg-icons'
 
 function Login(props) {
   return (
@@ -28,7 +30,7 @@ function Login(props) {
             </div>
           </div>
           <button class="btn btn-accent mt-5">Login</button>
-          <button class="btn btn-ghost mt-5">Google Login</button>
+          <button class="btn btn-ghost mt-5 text-white"><FontAwesomeIcon icon={faGoogle} className="mr-3 text-red-400"/> Google Login</button>
         </div>
     </div>
   )
