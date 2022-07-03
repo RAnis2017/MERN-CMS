@@ -15,7 +15,7 @@ import Posts from "./Pages/Posts";
 function App(props) {
   return (
     <Router>
-      <div>
+      <div className="min-h-screen">
         <Routes>
           <Route path="/" element={ <Login/> } />
           <Route path="admin" element={ <Admin/> } />
