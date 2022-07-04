@@ -5,5 +5,6 @@ module.exports = {
         password: '123',
         dbName: 'cmsDb',
         port: '27017'
-    }
+    },
+    TOKEN_KEY: 'longSecretKey',
 }
