@@ -2,11 +2,9 @@ import React, { useEffect } from "react"
 import "./Login.css"
 import { connect } from "react-redux"
 import {
-  increaseCounter,
-  decreaseCounter,
-} from "../redux/Counter/counter.actions"
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faGoogle } from '@fortawesome/free-brands-svg-icons'
+  GoogleSignInSuccess,
+  LoginSuccessAction,
+} from "../redux/App/app.actions"
 import GoogleLogin from "react-google-login"
 import { gapi } from 'gapi-script';
 
@@ -61,14 +59,14 @@ function Login(props) {
 
 const mapStateToProps = state => {
   return {
-    count: state.counter.count,
+    isLoggedIn: state.appState.isLoggedIn,
   }
 }
 
 const mapDispatchToProps = dispatch => {
   return {
-    increaseCounter: () => dispatch(increaseCounter()),
-    decreaseCounter: () => dispatch(decreaseCounter()),
+    googleSignInSuccess: () => dispatch(GoogleSignInSuccess()),
+    loginSuccessAction: () => dispatch(LoginSuccessAction()),
   }
 }
 
