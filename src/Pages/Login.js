@@ -8,14 +8,16 @@ import {
 } from "../redux/App/app.actions"
 import GoogleLogin from "react-google-login"
 import { gapi } from 'gapi-script';
-import { useMutation, useQuery } from 'react-query'
+import { useMutation } from 'react-query'
+import { useNavigate } from "react-router-dom"
 
 const clientID = '874157957573-9ghj35jep265q5u0ksfjr5mm22qmbb1k.apps.googleusercontent.com'
 
 function Login(props) {
-  const { googleSignInSuccess, setTokenAction, email } = props
+  const { googleSignInSuccess, setTokenAction, isLoggedIn, email, token } = props
   const [emailField, setEmailField] = useState('')
   const [passwordField, setPasswordField] = useState('')
+  let navigate = useNavigate();
 
   const { isLoading: isLoadingGoogle, isSuccess: isSuccessGoogle, mutate } = useMutation('login-google', ({email, name}) =>
      fetch('http://localhost:3001/login-google', { 
@@ -33,6 +35,7 @@ function Login(props) {
      ), {
       onSuccess: (data, variables, context) => {
         setTokenAction(data.token)
+        navigate("/admin");
       }
      }
    )
@@ -53,11 +56,20 @@ function Login(props) {
     ), {
     onSuccess: (data, variables, context) => {
       setTokenAction(data.token)
+      navigate("/admin");
     }
     }
   )
 
   useEffect(() => {
+    let token = localStorage.getItem('token')
+    let emailL = localStorage.getItem('email')
+    if(token) {
+      setTokenAction(token)
+      googleSignInSuccess(emailL)
+      navigate("/admin");
+    }
+
     function start() {
       gapi.client.init({
         clientId: clientID,
@@ -106,7 +118,7 @@ function Login(props) {
         <button class="btn btn-accent mt-5" onClick={() => manualLogin()}>Login</button>
         <GoogleLogin className="mt-5" clientId={clientID} buttonText='Google Login' onSuccess={onSuccess} onFailure={onFailure} isSignedIn={true} cookiePolicy={'single_host_origin'} class="btn btn-ghost mt-5 text-white"></GoogleLogin>
         {
-          isLoadingGoogle ?
+          isLoadingGoogle || isLoadingManual ?
           <div className="text-white mt-5">Loading...</div>
           : <></>
         }
@@ -127,7 +139,7 @@ const mapDispatchToProps = dispatch => {
   return {
     googleSignInSuccess: (email) => dispatch(GoogleSignInSuccess(email)),
     loginSuccessAction: () => dispatch(LoginSuccessAction()),
-    setTokenAction: (token) => dispatch(SetTokenAction(token)),
+    setTokenAction: (token) => { dispatch(SetTokenAction(token));  },
   }
 }
 

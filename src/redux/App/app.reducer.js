@@ -9,14 +9,17 @@ const INITIAL_STATE = {
 const reducer = (state = INITIAL_STATE, action) => {
     switch (action.type) {
         case LoginSuccess:
+            localStorage.setItem('email', action.payload);
             return {
                 ...state, email: action.payload, isLoggedIn: true,
             };
         case GoogleSignIn:
+            localStorage.setItem('email', action.payload);
             return {
                 ...state, email: action.payload, isLoggedIn: true,
             };
         case SetToken:
+            localStorage.setItem('token', action.payload);
             return {
                 ...state, token: action.payload,
             };
