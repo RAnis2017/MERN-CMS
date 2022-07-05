@@ -1,9 +1,10 @@
-import React, { useEffect } from "react"
+import React, { useEffect, useState } from "react"
 import "./Login.css"
 import { connect } from "react-redux"
 import {
   GoogleSignInSuccess,
   LoginSuccessAction,
+  SetTokenAction,
 } from "../redux/App/app.actions"
 import GoogleLogin from "react-google-login"
 import { gapi } from 'gapi-script';
@@ -12,8 +13,11 @@ import { useMutation, useQuery } from 'react-query'
 const clientID = '874157957573-9ghj35jep265q5u0ksfjr5mm22qmbb1k.apps.googleusercontent.com'
 
 function Login(props) {
-  const { googleSignInSuccess, email } = props
-  const { isLoading, isSuccess, data, mutate } = useMutation('login-google', ({email, name}) =>
+  const { googleSignInSuccess, setTokenAction, email } = props
+  const [emailField, setEmailField] = useState('')
+  const [passwordField, setPasswordField] = useState('')
+
+  const { isLoading: isLoadingGoogle, isSuccess: isSuccessGoogle, mutate } = useMutation('login-google', ({email, name}) =>
      fetch('http://localhost:3001/login-google', { 
       method: 'POST',
       headers: {
@@ -28,10 +32,30 @@ function Login(props) {
        res.json()
      ), {
       onSuccess: (data, variables, context) => {
-        console.log(data)
+        setTokenAction(data.token)
       }
      }
    )
+
+  const { isLoading: isLoadingManual, isSuccess: isSuccessManual, mutate: manualLoginMutate } = useMutation('login', ({email, password}) =>
+    fetch('http://localhost:3001/login', { 
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      email,
+      password
+    })
+    }).then(res =>
+      res.json()
+    ), {
+    onSuccess: (data, variables, context) => {
+      setTokenAction(data.token)
+    }
+    }
+  )
 
   useEffect(() => {
     function start() {
@@ -54,6 +78,11 @@ function Login(props) {
     console.log('Login Failure ===> ', response)
   }
 
+  const manualLogin = () => {
+    console.log('Manual Login', emailField, passwordField)
+    manualLoginMutate({email: emailField, password: passwordField})
+  }
+
   return (
     <div className="flex justify-center items-center flex-row min-h-screen bg-slate-800">
       <div className="flex flex-col justify-center items-center bg-slate-700 p-10 w-4/12 rounded-xl drop-shadow-md">
@@ -65,17 +94,22 @@ function Login(props) {
             <label className="label">
               <span className="label-text text-white">Email</span>
             </label>
-            <input type="text" placeholder="Type here" className="input input-ghost w-full max-w-md" />
+            <input type="text" placeholder="Type here" value={emailField} onChange={(e) => setEmailField((prev) => e.target.value)} className="input input-ghost w-full max-w-md" />
           </div>
           <div className="form-control w-full max-w-md">
             <label className="label">
               <span className="label-text text-white">Password</span>
             </label>
-            <input type="password" placeholder="Type here" className="input input-ghost w-full max-w-md" />
+            <input type="password" placeholder="Type here" value={passwordField} onChange={(e) => setPasswordField((prev) => e.target.value)}  className="input input-ghost w-full max-w-md" />
           </div>
         </div>
-        <button class="btn btn-accent mt-5">Login</button>
+        <button class="btn btn-accent mt-5" onClick={() => manualLogin()}>Login</button>
         <GoogleLogin className="mt-5" clientId={clientID} buttonText='Google Login' onSuccess={onSuccess} onFailure={onFailure} isSignedIn={true} cookiePolicy={'single_host_origin'} class="btn btn-ghost mt-5 text-white"></GoogleLogin>
+        {
+          isLoadingGoogle ?
+          <div className="text-white mt-5">Loading...</div>
+          : <></>
+        }
       </div>
     </div>
   )
@@ -84,7 +118,8 @@ function Login(props) {
 const mapStateToProps = state => {
   return {
     isLoggedIn: state.appState.isLoggedIn,
-    email: state.appState.email
+    email: state.appState.email,
+    token: state.appState.token
   }
 }
 
@@ -92,6 +127,7 @@ const mapDispatchToProps = dispatch => {
   return {
     googleSignInSuccess: (email) => dispatch(GoogleSignInSuccess(email)),
     loginSuccessAction: () => dispatch(LoginSuccessAction()),
+    setTokenAction: (token) => dispatch(SetTokenAction(token)),
   }
 }
 
