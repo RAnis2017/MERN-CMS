@@ -178,4 +178,21 @@ router.post('/add-post', (req, res, next) => {
   })
 })
 
+router.post('/add-category', (req, res, next) => {
+  let categoryModel = mongoose.model('Category');
+  console.log(req.body);
+  categoryModel.create({
+    name: req.body.name,
+    created_by: req.user.user_id,
+  }, (err, category) => {
+    if (err) {
+      console.log(err);
+      res.status(500).json({ 'message': 'Internal server error' });
+    } else {
+      res.status(200).json({ 'message': 'Category added' });
+    }
+  })
+})
+
+
 module.exports = router;

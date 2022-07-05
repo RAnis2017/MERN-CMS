@@ -9,11 +9,13 @@ const clientId = '874157957573-9ghj35jep265q5u0ksfjr5mm22qmbb1k.apps.googleuserc
 
 function Admin(props) {
   const [addPostClicked, setAddPostClicked] = useState(false)
+  const [addCategoryClicked, setAddCategoryClicked] = useState(false)
   const [addPostTitle, setAddPostTitle] = useState('')
   const [addPostDescription, setAddPostDescription] = useState('')
   const [addPostCategory, setAddPostCategory] = useState('')
   const [addPostImage, setAddPostImage] = useState('')
   const [addPostStatus, setAddPostStatus] = useState('')
+  const [addCategoryName, setAddCategoryName] = useState('')
 
   const { mutate: postMutate, isSuccess: postIsSuccess, isLoading: postIsLoading, isError: postIsError } = useMutation('add-post', (data) =>
     fetch('http://localhost:3001/add-post', {
@@ -32,6 +34,25 @@ function Admin(props) {
         setAddPostCategory('')
         setAddPostImage('')
         setAddPostStatus('')
+      }
+    }
+  )
+
+  const { mutate: categoryMutate, isSuccess: categoryIsSuccess, isLoading: categoryIsLoading, isError: categoryIsError } = useMutation('add-category', (data) =>
+    fetch('http://localhost:3001/add-category', {
+      headers: {
+        'x-access-token': localStorage.getItem('token'),
+        'accept': 'application/json',
+        'content-type': 'application/json'
+      },
+      method: 'POST',
+      body: JSON.stringify(data)
+    }).then(res =>
+      res.json()
+    ), {
+      onSuccess: (data, variables, context) => {
+        setAddCategoryClicked(false)
+        setAddCategoryName('')
       }
     }
   )
@@ -86,6 +107,10 @@ function Admin(props) {
 
   const exampleData = []
 
+  const addNewCategory = () => {
+    setAddCategoryClicked((prev) => !prev)
+  }
+
   const addNewPost = () => {
     setAddPostClicked((prev) => !prev)
   }
@@ -100,6 +125,10 @@ function Admin(props) {
     data.append('slug', convertToSlug(addPostTitle))
     data.append('status', addPostStatus)
     postMutate(data)
+  }
+
+  const saveNewCategory = () => {
+    categoryMutate({name: addCategoryName})
   }
 
   const convertToSlug = (text) => {
@@ -136,9 +165,14 @@ function Admin(props) {
               :
               <button className="btn btn-primary" onClick={() => addNewPost()}>Add Post</button>
             }
+            {
+              addCategoryClicked ?
+              <button className="btn btn-success ml-3" onClick={() => saveNewCategory()}>{categoryIsLoading ? 'Saving...' : 'Save Category' }</button>
+              :
+              <button className="btn btn-primary ml-3" onClick={() => addNewCategory()}>Add Category</button>
+            }
           </div>
         </div>
-        
         {
           addPostClicked ?
           <div className="flex justify-center mt-5 mb-10">
@@ -189,6 +223,24 @@ function Admin(props) {
                     <span className="label-text text-white">Image</span>
                   </label>
                   <input type="file" name="image" placeholder="Insert Post Image" onChange={(e) => addImageToPost(e)} className="input input-ghost w-full max-w-md" />
+                </div>
+              </div>
+            </div>
+          </div>
+          :
+          <></>
+        }
+
+        {
+          addCategoryClicked ?
+          <div className="flex justify-center mt-5 mb-10">
+            <div className="w-6/12 bg-slate-700 rounded-lg p-5 shadow-lg flex justify-center flex-row">
+              <div className="w-full max-w-md">
+                <div className="form-control w-full max-w-md">
+                  <label className="label">
+                    <span className="label-text text-white">Name</span>
+                  </label>
+                  <input type="text" placeholder="Type here" onChange={(e) => setAddCategoryName(e.target.value)} className="input input-ghost w-full max-w-md" />
                 </div>
               </div>
             </div>
