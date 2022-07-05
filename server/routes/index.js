@@ -5,6 +5,17 @@ const bcrypt = require('bcrypt');
 const auth = require("../middleware/auth");
 const jwt = require("jsonwebtoken");
 const config = require('../config');
+const multer = require('multer');
+const storage = multer.diskStorage({
+  destination: (req, file, callBack) => {
+      callBack(null, 'uploads')
+  },
+  filename: (req, file, callBack) => {
+      callBack(null, `${file.originalname}`)
+  }
+})
+
+let upload = multer({ dest: 'uploads/', storage }).single('image');
 //Middleware to log time for easy debugging when in development
 router.use(function timeLog(req, res, next) {
   console.log('Time: ', Date().toLocaleString());
@@ -12,8 +23,8 @@ router.use(function timeLog(req, res, next) {
 });
 
 // Define the home page route
-router.get('/', function(req, res) {
-  res.status(200).json({'message': 'hello'});
+router.get('/', function (req, res) {
+  res.status(200).json({ 'message': 'hello' });
 });
 
 function createUser(userModel, email, name, password) {
@@ -35,28 +46,28 @@ function createUser(userModel, email, name, password) {
 
 //random string generator
 function makePass(length) {
-  var result           = '';
-  var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  var result = '';
+  var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   var charactersLength = characters.length;
-  for ( var i = 0; i < length; i++ ) {
+  for (var i = 0; i < length; i++) {
     result += characters.charAt(Math.floor(Math.random() * charactersLength));
   }
   return result;
 }
 
-router.post('/login-google', function(req, res) {
+router.post('/login-google', function (req, res) {
   console.log(req.body);
   let email = req.body.email
   let name = req.body.name
   let userModel = mongoose.model('User');
-  userModel.findOne({email: email}, async function(err, user) {
+  userModel.findOne({ email: email }, async function (err, user) {
     if (err) {
       console.log(err);
-      res.status(500).json({'message': 'Internal server error'});
+      res.status(500).json({ 'message': 'Internal server error' });
     } else if (!user) {
       let password = makePass(8);
       let user = await createUser(userModel, email, name, password)
-      
+
       const token = jwt.sign(
         { user_id: user._id, email },
         config.TOKEN_KEY,
@@ -73,23 +84,23 @@ router.post('/login-google', function(req, res) {
     } else {
       if (err) {
         console.log(err);
-        res.status(500).json({'message': 'Internal server error'});
+        res.status(500).json({ 'message': 'Internal server error' });
       } else if (!user) {
-        res.status(401).json({'message': 'Password incorrect'});
+        res.status(401).json({ 'message': 'Password incorrect' });
       } else {
         const token = jwt.sign(
           { user_id: user._id, email },
           config.TOKEN_KEY,
           {
-            expiresIn: "2h",
+            expiresIn: "24h",
           }
         );
-  
+
         let loggedInUser = {
           token,
           email
         };
-  
+
         res.status(200).json(loggedInUser);
       }
     }
@@ -97,38 +108,38 @@ router.post('/login-google', function(req, res) {
 })
 
 
-router.post('/login', function(req, res) {
+router.post('/login', function (req, res) {
   console.log(req.body);
   let email = req.body.email;
   let password = req.body.password;
   let user = mongoose.model('User');
-  user.findOne({email: email}, function(err, user) {
+  user.findOne({ email: email }, function (err, user) {
     if (err) {
       console.log(err);
-      res.status(500).json({'message': 'Internal server error'});
+      res.status(500).json({ 'message': 'Internal server error' });
     } else if (!user) {
-      res.status(401).json({'message': 'User not found'});
+      res.status(401).json({ 'message': 'User not found' });
     } else {
-      bcrypt.compare(password, user.password, function(err, result) {
+      bcrypt.compare(password, user.password, function (err, result) {
         if (err) {
           console.log(err);
-          res.status(500).json({'message': 'Internal server error'});
+          res.status(500).json({ 'message': 'Internal server error' });
         } else if (!result) {
-          res.status(401).json({'message': 'Password incorrect'});
+          res.status(401).json({ 'message': 'Password incorrect' });
         } else {
           const token = jwt.sign(
             { user_id: user._id, email },
             config.TOKEN_KEY,
             {
-              expiresIn: "2h",
+              expiresIn: "24h",
             }
           );
-    
+
           let loggedInUser = {
             token,
             email
           };
-    
+
           res.status(200).json(loggedInUser);
         }
       });
@@ -137,5 +148,34 @@ router.post('/login', function(req, res) {
 });
 
 router.use(auth);
+
+router.post('/add-post', (req, res, next) => {
+  const file = req.file;
+  const body = req.body;
+  upload(req, res, function (err) {
+    if (err) {
+        console.log(err)
+    } else {
+        var fileName = req.file.filename;
+        let postModel = mongoose.model('Post');
+        postModel.create({
+          title: body.title,
+          description: body.description,
+          image_url: fileName,
+          slug: body.slug,
+          user_id: req.user.user_id,
+          category: body.category,
+          status: body.status,
+        }, (err, post) => {
+          if (err) {
+            console.log(err);
+            res.status(500).json({ 'message': 'Internal server error' });
+          } else {
+            res.status(200).json({ 'message': 'Post added' });
+          }
+        });
+    }
+  })
+})
 
 module.exports = router;
