@@ -1,8 +1,9 @@
-import { LoginSuccess, GoogleSignIn } from './app.types';
+import { LoginSuccess, GoogleSignIn, SetToken } from './app.types';
 
 const INITIAL_STATE = {
     email: '',
     isLoggedIn: false,
+    token: '',
 };
 
 const reducer = (state = INITIAL_STATE, action) => {
@@ -15,7 +16,10 @@ const reducer = (state = INITIAL_STATE, action) => {
             return {
                 ...state, email: action.payload, isLoggedIn: true,
             };
-
+        case SetToken:
+            return {
+                ...state, token: action.payload,
+            };
         default: return state;
     }
 };

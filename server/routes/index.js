@@ -5,7 +5,6 @@ const bcrypt = require('bcrypt');
 const auth = require("../middleware/auth");
 const jwt = require("jsonwebtoken");
 const config = require('../config');
-
 //Middleware to log time for easy debugging when in development
 router.use(function timeLog(req, res, next) {
   console.log('Time: ', Date().toLocaleString());
@@ -17,12 +16,93 @@ router.get('/', function(req, res) {
   res.status(200).json({'message': 'hello'});
 });
 
-router.post('login', function(req, res) {
+function createUser(userModel, email, name, password) {
+  return new Promise((resolve, reject) => {
+    let hash = bcrypt.hashSync(password, 12);
+    userModel.create({
+      email: email,
+      password: hash,
+      name: name,
+    }, (err, user) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(user);
+      }
+    });
+  });
+}
+
+//random string generator
+function makePass(length) {
+  var result           = '';
+  var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  var charactersLength = characters.length;
+  for ( var i = 0; i < length; i++ ) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+}
+
+router.post('/login-google', function(req, res) {
   console.log(req.body);
-  let username = req.body.username;
+  let email = req.body.email
+  let name = req.body.name
+  let userModel = mongoose.model('User');
+  userModel.findOne({email: email}, async function(err, user) {
+    if (err) {
+      console.log(err);
+      res.status(500).json({'message': 'Internal server error'});
+    } else if (!user) {
+      let password = makePass(8);
+      let user = await createUser(userModel, email, name, password)
+      
+      const token = jwt.sign(
+        { user_id: user._id, email },
+        config.TOKEN_KEY,
+        {
+          expiresIn: "2h",
+        }
+      );
+      let loggedInUser = {
+        token,
+        email
+      };
+
+      res.status(200).json(loggedInUser);
+    } else {
+      if (err) {
+        console.log(err);
+        res.status(500).json({'message': 'Internal server error'});
+      } else if (!user) {
+        res.status(401).json({'message': 'Password incorrect'});
+      } else {
+        const token = jwt.sign(
+          { user_id: user._id, email },
+          config.TOKEN_KEY,
+          {
+            expiresIn: "2h",
+          }
+        );
+  
+        let loggedInUser = {
+          token,
+          email
+        };
+  
+        res.status(200).json(loggedInUser);
+      }
+    }
+  });
+})
+
+
+router.post('/login', function(req, res) {
+  console.log(req.body);
+  let email = req.body.email;
   let password = req.body.password;
   let user = mongoose.model('User');
-  user.findOne({username: username}, function(err, user) {
+  user.findOne({email: email}, function(err, user) {
     if (err) {
       console.log(err);
       res.status(500).json({'message': 'Internal server error'});
@@ -37,16 +117,19 @@ router.post('login', function(req, res) {
           res.status(401).json({'message': 'Password incorrect'});
         } else {
           const token = jwt.sign(
-            { user_id: user._id, username },
+            { user_id: user._id, email },
             config.TOKEN_KEY,
             {
               expiresIn: "2h",
             }
           );
     
-          user.token = token;
+          let loggedInUser = {
+            token,
+            email
+          };
     
-          res.status(200).json(user);
+          res.status(200).json(loggedInUser);
         }
       });
     }

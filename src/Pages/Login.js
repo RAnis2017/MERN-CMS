@@ -7,10 +7,32 @@ import {
 } from "../redux/App/app.actions"
 import GoogleLogin from "react-google-login"
 import { gapi } from 'gapi-script';
+import { useMutation, useQuery } from 'react-query'
 
 const clientID = '874157957573-9ghj35jep265q5u0ksfjr5mm22qmbb1k.apps.googleusercontent.com'
 
 function Login(props) {
+  const { googleSignInSuccess, email } = props
+  const { isLoading, isSuccess, data, mutate } = useMutation('login-google', ({email, name}) =>
+     fetch('http://localhost:3001/login-google', { 
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email,
+        name
+      })
+     }).then(res =>
+       res.json()
+     ), {
+      onSuccess: (data, variables, context) => {
+        console.log(data)
+      }
+     }
+   )
+
   useEffect(() => {
     function start() {
       gapi.client.init({
@@ -23,7 +45,9 @@ function Login(props) {
   }, []);
 
   const onSuccess = response => {
-    console.log('Login Success ===> ', response.profileObj)
+    console.log(response.profileObj)
+    googleSignInSuccess(response.profileObj.email)
+    mutate({email: response.profileObj.email, name: response.profileObj.name})
   }
 
   const onFailure = response => {
@@ -37,17 +61,17 @@ function Login(props) {
           CMS Login
         </div>
         <div className="w-full max-w-md">
-          <div class="form-control w-full max-w-md">
-            <label class="label">
-              <span class="label-text text-white">Email</span>
+          <div className="form-control w-full max-w-md">
+            <label className="label">
+              <span className="label-text text-white">Email</span>
             </label>
-            <input type="text" placeholder="Type here" class="input input-ghost w-full max-w-md" />
+            <input type="text" placeholder="Type here" className="input input-ghost w-full max-w-md" />
           </div>
-          <div class="form-control w-full max-w-md">
-            <label class="label">
-              <span class="label-text text-white">Password</span>
+          <div className="form-control w-full max-w-md">
+            <label className="label">
+              <span className="label-text text-white">Password</span>
             </label>
-            <input type="password" placeholder="Type here" class="input input-ghost w-full max-w-md" />
+            <input type="password" placeholder="Type here" className="input input-ghost w-full max-w-md" />
           </div>
         </div>
         <button class="btn btn-accent mt-5">Login</button>
@@ -60,12 +84,13 @@ function Login(props) {
 const mapStateToProps = state => {
   return {
     isLoggedIn: state.appState.isLoggedIn,
+    email: state.appState.email
   }
 }
 
 const mapDispatchToProps = dispatch => {
   return {
-    googleSignInSuccess: () => dispatch(GoogleSignInSuccess()),
+    googleSignInSuccess: (email) => dispatch(GoogleSignInSuccess(email)),
     loginSuccessAction: () => dispatch(LoginSuccessAction()),
   }
 }
