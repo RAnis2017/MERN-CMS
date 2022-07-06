@@ -150,20 +150,21 @@ router.post('/login', function (req, res) {
 router.use(auth);
 
 router.post('/add-post', (req, res, next) => {
-  const file = req.file;
-  const body = req.body;
   upload(req, res, function (err) {
     if (err) {
         console.log(err)
     } else {
-        var fileName = req.file.filename;
+        let fileName = req.file.filename;
+        let body = req.body;
+        console.log(req.body.category, fileName);
+
         let postModel = mongoose.model('Post');
         postModel.create({
-          title: body.title,
+          name: body.title,
           description: body.description,
           image_url: fileName,
           slug: body.slug,
-          user_id: req.user.user_id,
+          created_by: req.user.user_id,
           category: body.category,
           status: body.status,
         }, (err, post) => {
@@ -190,6 +191,32 @@ router.post('/add-category', (req, res, next) => {
       res.status(500).json({ 'message': 'Internal server error' });
     } else {
       res.status(200).json({ 'message': 'Category added' });
+    }
+  })
+})
+
+router.get('/get-categories', (req, res, next) => {
+  let categoryModel = mongoose.model('Category');
+  categoryModel.find({}, (err, categories) => {
+    if (err) {
+      console.log(err);
+      res.status(500).json({ 'message': 'Internal server error' });
+    } else {
+      res.status(200).json(categories);
+    }
+  })
+})
+
+router.get('/get-posts', (req, res, next) => {
+  let postModel = mongoose.model('Post');
+  let userModel = mongoose.model('User');
+  let categoryModel = mongoose.model('Category');
+  postModel.find({}).populate({ path: 'created_by', model: userModel }).populate({ path: 'category', model: categoryModel }).exec((err, posts) => {
+    if (err) {
+      console.log(err);
+      res.status(500).json({ 'message': 'Internal server error' });
+    } else {
+      res.status(200).json(posts);
     }
   })
 })

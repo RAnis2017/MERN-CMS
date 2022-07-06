@@ -3,7 +3,7 @@ import "./Admin.css"
 import { connect } from "react-redux"
 import { useGoogleLogout } from 'react-google-login'
 import { useNavigate } from "react-router-dom"
-import { useMutation } from "react-query"
+import { useMutation, useQuery, useQueryClient } from "react-query"
 
 const clientId = '874157957573-9ghj35jep265q5u0ksfjr5mm22qmbb1k.apps.googleusercontent.com'
 
@@ -16,6 +16,33 @@ function Admin(props) {
   const [addPostImage, setAddPostImage] = useState('')
   const [addPostStatus, setAddPostStatus] = useState('')
   const [addCategoryName, setAddCategoryName] = useState('')
+  const queryClient = useQueryClient()
+
+  const { isLoading: categoriesLoading, isSuccess: categoriesSuccess, data: categories } = useQuery('categories', () =>
+    fetch('http://localhost:3001/get-categories', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'x-access-token': localStorage.getItem('token'),
+      }
+    }).then(res =>
+      res.json()
+    )
+  )
+
+  const { isLoading: postsLoading, isSuccess: postsSuccess, data: posts } = useQuery('posts', () =>
+    fetch('http://localhost:3001/get-posts', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'x-access-token': localStorage.getItem('token'),
+      }
+    }).then(res =>
+      res.json()
+    )
+  )
 
   const { mutate: postMutate, isSuccess: postIsSuccess, isLoading: postIsLoading, isError: postIsError } = useMutation('add-post', (data) =>
     fetch('http://localhost:3001/add-post', {
@@ -28,6 +55,7 @@ function Admin(props) {
       res.json()
     ), {
       onSuccess: (data, variables, context) => {
+        queryClient.invalidateQueries('posts')
         setAddPostClicked(false)
         setAddPostTitle('')
         setAddPostDescription('')
@@ -51,6 +79,7 @@ function Admin(props) {
       res.json()
     ), {
       onSuccess: (data, variables, context) => {
+        queryClient.invalidateQueries('categories')
         setAddCategoryClicked(false)
         setAddCategoryName('')
       }
@@ -75,25 +104,48 @@ function Admin(props) {
   })
 
   // dynamic table component
-  const Table = ({data}) => {
+  const Table = ({data, isCategory = false}) => {
     return (
       <table className="table table-striped relative">
         <thead>
           <tr>
-            <th className="sticky top-0">Title</th>
-            <th className="sticky top-0">Author</th>
-            <th className="sticky top-0">Image</th>
+            {
+              isCategory ? <>
+              <th className="sticky top-0">Name</th>
+              </>
+              : <>
+              <th className="sticky top-0">Title</th>
+              <th className="sticky top-0">Author</th>
+              <th className="sticky top-0">Slug</th>
+              <th className="sticky top-0">Category</th>
+              <th className="sticky top-0">Status</th>
+              <th className="sticky top-0">Image</th>
+              </>
+            }
+            
             <th className="sticky top-0">Actions</th>
           </tr>
         </thead>
         <tbody>
-          {data.map(item => (
+          {data?.map(item => (
             <tr key={item.id}>
-              <td>{item.title}</td>
-              <td>{item.createdBy}</td>
-              <td>{item.image_url}</td>
+              {
+                isCategory ?
+                <>
+                <td>{item.name}</td>
+                </> :
+                <>
+                <td>{item.name}</td>
+                <td>{item.created_by?.name}</td>
+                <td>{item.slug}</td>
+                <td>{item.category?.name}</td>
+                <td>{item.status}</td>
+                <td>{item.image_url}</td>
+                </>
+              }
+              
               <td>
-                <button className="btn btn-danger" onClick={() => deletePost(item.id)}>Delete</button>
+                <button className="btn btn-danger" onClick={() => deletePost(item._id)}>Delete</button>
               </td>
             </tr>
           ))}
@@ -108,10 +160,12 @@ function Admin(props) {
   const exampleData = []
 
   const addNewCategory = () => {
+    setAddPostClicked(false)
     setAddCategoryClicked((prev) => !prev)
   }
 
   const addNewPost = () => {
+    setAddCategoryClicked(false)
     setAddPostClicked((prev) => !prev)
   }
 
@@ -144,16 +198,27 @@ function Admin(props) {
   return (
     <div>
         <div className=" flex justify-between m-5">
-          <button className="btn btn-ghost" onClick={() => navigate('/posts')}>Posts</button>
+          <button className="btn btn-ghost underline" onClick={() => navigate('/posts')}>Posts</button>
           <button class="btn btn-warning" onClick={() => signOut()}>Logout</button>
         </div>  
 
-        <div className="flex justify-center">
-          <div className="w-3/12 flex justify-center items-center">
-            <h1>Posts</h1>
+        <div className="flex justify-around flex-row flex-wrap">
+          <div className=" h-80 overflow-scroll flex flex-col justify-center items-center">
+            <h1 className="mb-5">Categories</h1>
+            {
+              categoriesLoading ?
+              <div className="flex justify-center">
+                <div className="spinner-border text-primary" role="status">
+                  <span className="sr-only">Loading...</span>
+                </div>
+              </div>
+              : <></>
+            }
+            <Table data={categories} isCategory={true}/>
           </div>
-          <div className="w-7/12 h-80 overflow-scroll">
-            <Table data={exampleData}/>
+          <div className=" h-80 overflow-scroll flex flex-col justify-center items-center">
+          <h1 className="mb-5">Posts</h1>
+            <Table data={posts}/>
           </div>
         </div>
 
@@ -197,9 +262,11 @@ function Admin(props) {
                   </label>
                   <select className="input input-ghost w-full max-w-md" onChange={(e) => setAddPostCategory(e.target.value)}>
                     <option value={''}>Select Category</option>
-                    <option value={1}>Category 1</option>
-                    <option value={2}>Category 2</option>
-                    <option value={3}>Category 3</option>
+                    { 
+                      categories.map(item => (
+                        <option key={item._id} value={item._id}>{item.name}</option>
+                      ))
+                    }
                   </select>
                 </div>
                 <div className="form-control w-full max-w-md">
