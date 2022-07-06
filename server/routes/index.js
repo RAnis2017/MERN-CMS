@@ -8,10 +8,10 @@ const config = require('../config');
 const multer = require('multer');
 const storage = multer.diskStorage({
   destination: (req, file, callBack) => {
-      callBack(null, 'uploads')
+    callBack(null, 'uploads')
   },
   filename: (req, file, callBack) => {
-      callBack(null, `${file.originalname}`)
+    callBack(null, `${file.originalname}`)
   }
 })
 
@@ -152,29 +152,29 @@ router.use(auth);
 router.post('/add-post', (req, res, next) => {
   upload(req, res, function (err) {
     if (err) {
-        console.log(err)
+      console.log(err)
     } else {
-        let fileName = req.file.filename;
-        let body = req.body;
-        console.log(req.body.category, fileName);
+      let fileName = req.file.filename;
+      let body = req.body;
+      console.log(req.body.category, fileName);
 
-        let postModel = mongoose.model('Post');
-        postModel.create({
-          name: body.title,
-          description: body.description,
-          image_url: fileName,
-          slug: body.slug,
-          created_by: req.user.user_id,
-          category: body.category,
-          status: body.status,
-        }, (err, post) => {
-          if (err) {
-            console.log(err);
-            res.status(500).json({ 'message': 'Internal server error' });
-          } else {
-            res.status(200).json({ 'message': 'Post added' });
-          }
-        });
+      let postModel = mongoose.model('Post');
+      postModel.create({
+        name: body.title,
+        description: body.description,
+        image_url: fileName,
+        slug: body.slug,
+        created_by: req.user.user_id,
+        category: body.category,
+        status: body.status,
+      }, (err, post) => {
+        if (err) {
+          console.log(err);
+          res.status(500).json({ 'message': 'Internal server error' });
+        } else {
+          res.status(200).json({ 'message': 'Post added' });
+        }
+      });
     }
   })
 })
@@ -217,6 +217,110 @@ router.get('/get-posts', (req, res, next) => {
       res.status(500).json({ 'message': 'Internal server error' });
     } else {
       res.status(200).json(posts);
+    }
+  })
+})
+
+router.get('/get-post/:id', (req, res, next) => {
+  let postModel = mongoose.model('Post');
+  let userModel = mongoose.model('User');
+  let categoryModel = mongoose.model('Category');
+  postModel.findById(req.params.id).populate({ path: 'created_by', model: userModel }).populate({ path: 'category', model: categoryModel }).exec((err, post) => {
+    if (err) {
+      console.log(err);
+      res.status(500).json({ 'message': 'Internal server error' });
+    } else {
+      res.status(200).json(post);
+    }
+  })
+})
+
+router.put('/update-post/:id', (req, res, next) => {
+  let postModel = mongoose.model('Post');
+  upload(req, res, function (err) {
+    if (err) {
+      console.log(err)
+    } else {
+      let fileName = req.file.filename;
+      let body = req.body;
+
+      postModel.updateOne({ _id: req.params.id }, {
+        name: body.title,
+        description: body.description,
+        slug: body.slug,
+        category: body.category,
+        status: body.status === 'true' ? true : false,
+        image_url: fileName,
+      }, (err, post) => {
+        if (err) {
+          console.log(err);
+          res.status(500).json({ 'message': 'Internal server error' });
+        } else {
+          res.status(200).json({ 'message': 'Post updated' });
+        }
+      })
+
+    }
+  })
+
+})
+
+router.put('/update-category/:id', (req, res, next) => {
+  let categoryModel = mongoose.model('Category');
+  categoryModel.updateOne({ _id: req.params.id }, {
+    name: req.body.name,
+  }, (err, category) => {
+    if (err) {
+      console.log(err);
+      res.status(500).json({ 'message': 'Internal server error' });
+    } else {
+      res.status(200).json({ 'message': 'Category updated' });
+    }
+  })
+})
+
+router.delete('/delete-post/:id', (req, res, next) => {
+  let postModel = mongoose.model('Post');
+  postModel.deleteOne({ _id: req.params.id }, (err, post) => {
+    if (err) {
+      console.log(err);
+      res.status(500).json({ 'message': 'Internal server error' });
+    } else {
+      res.status(200).json({ 'message': 'Post deleted' });
+    }
+  })
+})
+
+router.delete('/delete-category/:id', (req, res, next) => {
+  let categoryModel = mongoose.model('Category');
+  categoryModel.deleteOne({ _id: req.params.id }, (err, category) => {
+    if (err) {
+      console.log(err);
+      res.status(500).json({ 'message': 'Internal server error' });
+    } else {
+      let postModel = mongoose.model('Post');
+      postModel.deleteMany({ category: req.params.id }, (err, post) => {
+        if (err) {
+          console.log(err);
+          res.status(500).json({ 'message': 'Internal server error' });
+        } else {
+          res.status(200).json({ 'message': 'Category deleted' });
+        }
+      })
+    }
+  })
+})
+
+router.put('/change-status/:id', (req, res, next) => {
+  let postModel = mongoose.model('Post');
+  postModel.updateOne({ _id: req.params.id }, {
+    status: req.body.status === 'true' ? false : true,
+  }, (err, post) => {
+    if (err) {
+      console.log(err);
+      res.status(500).json({ 'message': 'Internal server error' });
+    } else {
+      res.status(200).json({ 'message': 'Status updated' });
     }
   })
 })

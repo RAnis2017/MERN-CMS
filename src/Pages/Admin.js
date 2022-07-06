@@ -4,6 +4,8 @@ import { connect } from "react-redux"
 import { useGoogleLogout } from 'react-google-login'
 import { useNavigate } from "react-router-dom"
 import { useMutation, useQuery, useQueryClient } from "react-query"
+import { faTrash, faPen, faCheck, faCancel, faImage } from "@fortawesome/free-solid-svg-icons"
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 
 const clientId = '874157957573-9ghj35jep265q5u0ksfjr5mm22qmbb1k.apps.googleusercontent.com'
 
@@ -16,6 +18,8 @@ function Admin(props) {
   const [addPostImage, setAddPostImage] = useState('')
   const [addPostStatus, setAddPostStatus] = useState('')
   const [addCategoryName, setAddCategoryName] = useState('')
+  const [isPostUpdating, setIsPostUpdating] = useState(false)
+  const [isCategoryUpdating, setIsCategoryUpdating] = useState(false)
   const queryClient = useQueryClient()
 
   const { isLoading: categoriesLoading, isSuccess: categoriesSuccess, data: categories } = useQuery('categories', () =>
@@ -103,6 +107,138 @@ function Admin(props) {
     onFailure,
   })
 
+  const deleteCall = (id, isCategory) => {
+    if (isCategory) {
+      categoryMutateDelete.mutate({
+        id
+      })
+    } else {
+      postMutateDelete.mutate({
+        id
+      })
+    }
+  }
+
+  const editCall = (id, isCategory) => {
+    if (isCategory) {
+      setAddCategoryClicked(true)
+      setAddCategoryName(categories.find(category => category._id === id).name)
+      setIsCategoryUpdating(id)
+    } else {
+      setAddPostClicked(true)
+      setAddPostTitle(posts.find(post => post._id === id).name)
+      setAddPostDescription(posts.find(post => post._id === id).description)
+      setAddPostCategory(posts.find(post => post._id === id).category._id)
+      setAddPostImage(posts.find(post => post._id === id).image_url)
+      setAddPostStatus(posts.find(post => post._id === id).status === 'true' ? true : false)
+      setIsPostUpdating(id)
+    }
+  }
+
+  const changeStatusCall = (id, status) => {
+    postMutateChangeStatus.mutate({
+      id,
+      status
+    })
+  }
+
+  const postMutateDelete = useMutation('delete-post', (data) =>
+    fetch(`http://localhost:3001/delete-post/${data.id}`, {
+      headers: {
+        'x-access-token': localStorage.getItem('token'),
+        'accept': 'application/json',
+        'content-type': 'application/json'
+      },
+      method: 'DELETE',
+    }).then(res =>
+      res.json()
+    ), {
+      onSuccess: (data, variables, context) => {
+        queryClient.invalidateQueries('posts')
+      }
+    }
+  )
+
+  const categoryMutateDelete = useMutation('delete-category', (data) =>
+    fetch(`http://localhost:3001/delete-category/${data.id}`, {
+      headers: {
+        'x-access-token': localStorage.getItem('token'),
+        'accept': 'application/json',
+        'content-type': 'application/json'
+      },
+      method: 'DELETE'
+    }).then(res =>
+      res.json()
+    ), {
+      onSuccess: (data, variables, context) => {
+        queryClient.invalidateQueries('categories')
+      }
+    }
+  )
+
+  const postMutateChangeStatus = useMutation('change-status', (data) =>
+    fetch(`http://localhost:3001/change-status/${data.id}`, {
+      headers: {
+        'x-access-token': localStorage.getItem('token'),
+        'accept': 'application/json',
+        'content-type': 'application/json'
+      },
+      method: 'PUT',
+      body: JSON.stringify(data)
+    }).then(res =>
+      res.json()
+    ), {
+      onSuccess: (data, variables, context) => {
+        queryClient.invalidateQueries('posts')
+      }
+    }
+  )
+
+  const { mutate: postUpdateMutate } = useMutation('update-post', (data) =>
+    fetch(`http://localhost:3001/update-post/${isPostUpdating}`, {
+      headers: {
+        'x-access-token': localStorage.getItem('token')
+      },
+      method: 'PUT',
+      body: data
+    }).then(res =>
+      res.json()
+    ), {
+      onSuccess: (data, variables, context) => {
+        queryClient.invalidateQueries('posts')
+        setAddPostClicked(false)
+        setAddPostTitle('')
+        setAddPostDescription('')
+        setAddPostCategory('')
+        setAddPostImage('')
+        setAddPostStatus('')
+        setIsPostUpdating(false)
+      }
+    }
+  )
+
+  const { mutate: categoryUpdateMutate } = useMutation('update-category', (data) =>
+    fetch(`http://localhost:3001/update-category/${isCategoryUpdating}`, {
+      headers: {
+        'x-access-token': localStorage.getItem('token'),
+        'accept': 'application/json',
+        'content-type': 'application/json'
+      },
+      method: 'PUT',
+      body: JSON.stringify(data)
+    }).then(res =>
+      res.json()
+    ), {
+      onSuccess: (data, variables, context) => {
+        queryClient.invalidateQueries('categories')
+        setAddCategoryClicked(false)
+        setAddCategoryName('')
+        setIsCategoryUpdating(false)
+      }
+    }
+  )
+
+
   // dynamic table component
   const Table = ({data, isCategory = false}) => {
     return (
@@ -128,24 +264,44 @@ function Admin(props) {
         </thead>
         <tbody>
           {data?.map(item => (
-            <tr key={item.id}>
+            <tr key={item._id}>
               {
                 isCategory ?
                 <>
                 <td>{item.name}</td>
                 </> :
                 <>
-                <td>{item.name}</td>
-                <td>{item.created_by?.name}</td>
-                <td>{item.slug}</td>
-                <td>{item.category?.name}</td>
-                <td>{item.status}</td>
-                <td>{item.image_url}</td>
+                <td className="truncate max-w-[200px]" title={item.name}>{item.name}</td>
+                <td className="truncate max-w-[100px]" title={item.created_by?.name}>{item.created_by?.name}</td>
+                <td className="truncate max-w-[100px]" title={item.slug}>{item.slug}</td>
+                <td className="truncate max-w-[100px]" title={item.category?.name}>{item.category?.name}</td>
+                <td className={`truncate max-w-xs ${item.status === 'true' ? 'text-green-400' : 'text-red-400'}`}>{item.status === 'true' ? 'Active' : 'Inactive'}</td>
+                <td className="truncate max-w-xs">
+                  <a className="btn btn-sm btn-circle" title={item.image_url} href={`http://localhost:3001/${item.image_url}`} target="_blank">
+                    <FontAwesomeIcon icon={faImage} className="text-blue-400" />
+                  </a>
+                </td>
                 </>
               }
               
               <td>
-                <button className="btn btn-danger" onClick={() => deletePost(item._id)}>Delete</button>
+                {
+                  isCategory ?
+                  <></> :
+                  <button className="btn btn-circle" onClick={() => changeStatusCall(item._id, item.status)}>
+                    {
+                      item.status === 'true' ?
+                      <FontAwesomeIcon className="text-red-400" icon={faCancel} /> :
+                      <FontAwesomeIcon className="text-green-400" icon={faCheck} />
+                    }
+                  </button>
+                }
+                <button className="btn btn-circle ml-2" onClick={() => editCall(item._id, isCategory)}>
+                  <FontAwesomeIcon icon={faPen} />
+                </button>
+                <button className="btn btn-circle ml-2 text-red-400" onClick={() => deleteCall(item._id, isCategory)}>
+                  <FontAwesomeIcon icon={faTrash} />
+                </button>
               </td>
             </tr>
           ))}
@@ -153,11 +309,6 @@ function Admin(props) {
       </table>
     )
   }
-
-  const deletePost = id => {
-  }
-
-  const exampleData = []
 
   const addNewCategory = () => {
     setAddPostClicked(false)
@@ -178,11 +329,20 @@ function Admin(props) {
     data.append('category', addPostCategory)
     data.append('slug', convertToSlug(addPostTitle))
     data.append('status', addPostStatus)
-    postMutate(data)
+
+    if (isPostUpdating) {
+      postUpdateMutate(data)
+    } else {
+      postMutate(data)
+    }
   }
 
   const saveNewCategory = () => {
-    categoryMutate({name: addCategoryName})
+    if (isCategoryUpdating) {
+      categoryUpdateMutate({name: addCategoryName})
+    } else {
+      categoryMutate({name: addCategoryName})
+    }
   }
 
   const convertToSlug = (text) => {
@@ -199,7 +359,7 @@ function Admin(props) {
     <div>
         <div className=" flex justify-between m-5">
           <button className="btn btn-ghost underline" onClick={() => navigate('/posts')}>Posts</button>
-          <button class="btn btn-warning" onClick={() => signOut()}>Logout</button>
+          <button className="btn btn-warning" onClick={() => signOut()}>Logout</button>
         </div>  
 
         <div className="flex justify-around flex-row flex-wrap">
@@ -226,13 +386,13 @@ function Admin(props) {
           <div className=" w-1/3 mt-10">
             {
               addPostClicked ?
-              <button className="btn btn-success" onClick={() => saveNewPost()}>{postIsLoading ? 'Saving...' : 'Save Post' }</button>
+              <button className="btn btn-success" onClick={() => saveNewPost()}>{postIsLoading ? 'Saving...' : isPostUpdating ? 'Update Post' : 'Save Post' }</button>
               :
               <button className="btn btn-primary" onClick={() => addNewPost()}>Add Post</button>
             }
             {
               addCategoryClicked ?
-              <button className="btn btn-success ml-3" onClick={() => saveNewCategory()}>{categoryIsLoading ? 'Saving...' : 'Save Category' }</button>
+              <button className="btn btn-success ml-3" onClick={() => saveNewCategory()}>{categoryIsLoading ? 'Saving...' : isCategoryUpdating ? 'Update Category' : 'Save Category' }</button>
               :
               <button className="btn btn-primary ml-3" onClick={() => addNewCategory()}>Add Category</button>
             }
@@ -247,7 +407,7 @@ function Admin(props) {
                   <label className="label">
                     <span className="label-text text-white">Title</span>
                   </label>
-                  <input type="text" placeholder="Type here" onChange={(e) => setAddPostTitle(e.target.value)} className="input input-ghost w-full max-w-md" />
+                  <input type="text" placeholder="Type here" value={addPostTitle} onChange={(e) => setAddPostTitle(e.target.value)} className="input input-ghost w-full max-w-md" />
                 </div>
                 <div className="form-control w-full max-w-md">
                   <label className="label">
@@ -260,7 +420,7 @@ function Admin(props) {
                   <label className="label">
                     <span className="label-text text-white">Category</span>
                   </label>
-                  <select className="input input-ghost w-full max-w-md" onChange={(e) => setAddPostCategory(e.target.value)}>
+                  <select className="input input-ghost w-full max-w-md" value={addPostCategory} onChange={(e) => setAddPostCategory(e.target.value)}>
                     <option value={''}>Select Category</option>
                     { 
                       categories.map(item => (
@@ -273,7 +433,7 @@ function Admin(props) {
                   <label className="label">
                     <span className="label-text text-white">Status</span>
                   </label>
-                  <select className="input input-ghost w-full max-w-md" onChange={(e) => setAddPostStatus(e.target.value)}>
+                  <select className="input input-ghost w-full max-w-md" value={addPostStatus} onChange={(e) => setAddPostStatus(e.target.value)}>
                     <option>Select Status</option>
                     <option value={true}>Active</option>
                     <option value={false}>Inactive</option>
@@ -283,7 +443,7 @@ function Admin(props) {
                   <label className="label">
                     <span className="label-text text-white">Description</span>
                   </label>
-                  <textarea className="input input-ghost w-full max-w-md" onChange={(e) => setAddPostDescription(e.target.value)} rows={20} placeholder="Type here"></textarea>
+                  <textarea className="input input-ghost w-full max-w-md" value={addPostDescription} onChange={(e) => setAddPostDescription(e.target.value)} rows={20} placeholder="Type here"></textarea>
                 </div>
                 <div className="form-control w-full max-w-md">
                   <label className="label">
@@ -307,7 +467,7 @@ function Admin(props) {
                   <label className="label">
                     <span className="label-text text-white">Name</span>
                   </label>
-                  <input type="text" placeholder="Type here" onChange={(e) => setAddCategoryName(e.target.value)} className="input input-ghost w-full max-w-md" />
+                  <input type="text" placeholder="Type here" value={addCategoryName} onChange={(e) => setAddCategoryName(e.target.value)} className="input input-ghost w-full max-w-md" />
                 </div>
               </div>
             </div>

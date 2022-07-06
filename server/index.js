@@ -22,6 +22,8 @@ const cors = require("cors")
 
 app.use(cors())
 app.use(bodyParser.json())
+// use uploads folder for static files
+app.use(express.static('uploads'))
 
 //Routes
 app.use(require('./routes')); 
