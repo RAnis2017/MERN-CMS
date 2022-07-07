@@ -6,6 +6,8 @@ import { useNavigate } from "react-router-dom"
 import { useMutation, useQuery, useQueryClient } from "react-query"
 import { faTrash, faPen, faCheck, faCancel, faImage } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 const clientId = '874157957573-9ghj35jep265q5u0ksfjr5mm22qmbb1k.apps.googleusercontent.com'
 
@@ -21,6 +23,12 @@ function Admin(props) {
   const [isPostUpdating, setIsPostUpdating] = useState(false)
   const [isCategoryUpdating, setIsCategoryUpdating] = useState(false)
   const queryClient = useQueryClient()
+
+
+  //Editor
+
+  const [value, setValue] = useState('');
+
 
   const { isLoading: categoriesLoading, isSuccess: categoriesSuccess, data: categories } = useQuery('categories', () =>
     fetch('http://localhost:3001/get-categories', {
@@ -443,7 +451,7 @@ function Admin(props) {
                   <label className="label">
                     <span className="label-text text-white">Description</span>
                   </label>
-                  <textarea className="input input-ghost w-full max-w-md" value={addPostDescription} onChange={(e) => setAddPostDescription(e.target.value)} rows={20} placeholder="Type here"></textarea>
+                  <ReactQuill className="bg-slate-800 border-transparent" theme="snow" value={addPostDescription} onChange={(e) => {setAddPostDescription(e)}}/>
                 </div>
                 <div className="form-control w-full max-w-md">
                   <label className="label">

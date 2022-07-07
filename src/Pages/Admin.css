@@ -1,0 +1,7 @@
+.quill > .ql-toolbar:first-child {
+    display: none !important;
+}
+
+.ql-toolbar.ql-snow {
+    background: #fff;
+}

@@ -3,6 +3,9 @@ import "./Posts.css"
 import { connect } from "react-redux"
 import { useGoogleLogout } from 'react-google-login'
 import { useNavigate } from "react-router-dom"
+import { useQuery } from "react-query"
+import { faUser, faCalendar, faDna } from "@fortawesome/free-solid-svg-icons"
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 
 const clientId = '874157957573-9ghj35jep265q5u0ksfjr5mm22qmbb1k.apps.googleusercontent.com'
 
@@ -24,12 +27,52 @@ function Posts(props) {
     onFailure,
   })
 
+  const { data: posts, isLoading: isPostsLoading, isError: isPostsError } = useQuery('posts', () => {
+    return fetch('http://localhost:3001/get-posts', {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'x-access-token': localStorage.getItem('token'),
+      }
+    }).then(res =>
+      res.json()
+    )
+  }
+  )
+
   return (
     <div>
-        <div className=" flex justify-between m-5">
-          <button className="btn btn-ghost" onClick={() => navigate('/admin')}>Admin</button>
-          <button class="btn btn-warning" onClick={() => signOut()}>Logout</button>
-        </div>  
+      <div className=" flex justify-between m-5">
+        <button className="btn btn-ghost" onClick={() => navigate('/admin')}>Admin</button>
+        <button className="btn btn-warning" onClick={() => signOut()}>Logout</button>
+      </div>
+      <div className="posts-container flex justify-center content-center flex-wrap flex-col">
+        {isPostsLoading ? <p>Loading...</p> : null}
+        {isPostsError ? <p>Error</p> : null}
+        {posts?.map(post => (
+          <div className="post-container p-5 bg-white max-w-4xl rounded-xl shadow-xl mb-10" key={post._id}>
+            <div className="post-title text-2xl">
+              <h1>{post.name}</h1>
+            </div>
+            <div className="post-date">
+              <FontAwesomeIcon icon={faCalendar} className="mr-5" />
+              {(new Date(post.created_date).toDateString())}</div>
+            <div className="post-author">
+              <FontAwesomeIcon icon={faUser} className="mr-5" />
+              {post.created_by.name}
+            </div>
+            <div className="post-category">
+              <FontAwesomeIcon icon={faDna} className="mr-5" />
+              {post.category.name}
+            </div>
+            <div className="post-img flex justify-center content-center mt-5">
+              <img src={`http://localhost:3001/${post.image_url}`} className="rounded-lg shadow-lg" alt={post.slug} />
+            </div>
+            <div className="post-description mt-10"><div dangerouslySetInnerHTML={{__html: post.description}}></div></div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
@@ -41,7 +84,7 @@ const mapStateToProps = state => {
 
 const mapDispatchToProps = dispatch => {
   return {
-    
+
   }
 }
 
