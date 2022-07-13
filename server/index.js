@@ -11,6 +11,7 @@ const start = async () => {
 };
 
 start();
+require('./models/permissions')
 require('./models/users')
 require('./models/categories')
 require('./models/posts')

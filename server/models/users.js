@@ -14,6 +14,7 @@ const UserSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    permissions: [{ type : mongoose.Schema.Types.ObjectId, ref: 'Permission' }],
     created_date: {
         type: Date,
         default: Date.now,
