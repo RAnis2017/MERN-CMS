@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom"
 import { useQuery } from "react-query"
 import { faUser, faCalendar, faDna } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { fetchFunc } from "../utils"
 
 const clientId = '874157957573-9ghj35jep265q5u0ksfjr5mm22qmbb1k.apps.googleusercontent.com'
 
@@ -27,18 +28,12 @@ function Posts(props) {
     onFailure,
   })
 
-  const { data: posts, isLoading: isPostsLoading, isError: isPostsError } = useQuery('posts', () => {
-    return fetch('http://localhost:3001/get-posts', {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'x-access-token': localStorage.getItem('token'),
-      }
-    }).then(res =>
-      res.json()
-    )
-  }
+  const { data: posts, isLoading: isPostsLoading, isError: isPostsError } = useQuery('posts', () => 
+    fetchFunc(`http://localhost:3001/get-posts`, 'GET', {
+      'x-access-token': localStorage.getItem('token'),
+      'accept': 'application/json',
+      'content-type': 'application/json'
+    }, null, navigate)
   )
 
   return (

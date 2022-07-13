@@ -154,7 +154,7 @@ router.post('/add-post', (req, res, next) => {
     if (err) {
       console.log(err)
     } else {
-      let fileName = req.file.filename;
+      let fileName = req?.file?.filename ? req.file.filename : '';
       let body = req.body;
       console.log(req.body.category, fileName);
 
@@ -241,17 +241,22 @@ router.put('/update-post/:id', (req, res, next) => {
     if (err) {
       console.log(err)
     } else {
-      let fileName = req.file.filename;
       let body = req.body;
+      let fileName = ''
 
-      postModel.updateOne({ _id: req.params.id }, {
+      let options = {
         name: body.title,
         description: body.description,
         slug: body.slug,
         category: body.category,
         status: body.status === 'true' ? true : false,
-        image_url: fileName,
-      }, (err, post) => {
+      }
+      if(req.file && req.file.filename) {
+        fileName = req.file.filename
+        options['image_url'] = fileName
+      }
+      
+      postModel.updateOne({ _id: req.params.id }, options, (err, post) => {
         if (err) {
           console.log(err);
           res.status(500).json({ 'message': 'Internal server error' });

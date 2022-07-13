@@ -23,6 +23,7 @@ function App({ isLoggedIn, email, token }) {
             <Route path="/" element={ <Login /> } />
             <Route path="admin" element={ <Admin/> } />
             <Route path="posts" element={ <Posts/> } />
+            <Route path="*" element={ <Login /> } />
           </Routes>
         </div>
       </Router>

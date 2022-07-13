@@ -16,7 +16,6 @@ const PostSchema = new mongoose.Schema({
     },
     image_url: {
         type: String,
-        required: true,
     },
     status: {
         type: String,
