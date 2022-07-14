@@ -12,9 +12,10 @@ const verifyToken = (req, res, next) => {
     req.user = decoded;
 
     let isAuthorized = false;
-
     req.user.permissions.forEach(permission => {
-      if(config.PERMISSIONS[permission.label] && config.PERMISSIONS[permission.label].includes(req.url)) {
+      let url = req.url.split("/")[1];
+      
+      if(config.PERMISSIONS[permission.label] && config.PERMISSIONS[permission.label].includes(url)) {
         isAuthorized = true;
       }
     })

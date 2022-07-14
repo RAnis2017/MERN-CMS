@@ -33,7 +33,13 @@ function Posts(props) {
       'x-access-token': localStorage.getItem('token'),
       'accept': 'application/json',
       'content-type': 'application/json'
-    }, null, navigate)
+    }, null, navigate, 'readAllPosts'),
+    {
+      refetchOnWindowFocus: false,
+      retry: false,
+      retryError: false,
+      refetchOnError: false
+    }
   )
 
   return (
@@ -45,7 +51,7 @@ function Posts(props) {
       <div className="posts-container flex justify-center content-center flex-wrap flex-col">
         {isPostsLoading ? <p>Loading...</p> : null}
         {isPostsError ? <p>Error</p> : null}
-        {posts?.map(post => (
+        {posts?.length && posts?.map(post => (
           <div className="post-container p-5 bg-white max-w-4xl rounded-xl shadow-xl mb-10" key={post._id}>
             <div className="post-title text-2xl">
               <h1>{post.name}</h1>
@@ -67,6 +73,9 @@ function Posts(props) {
             <div className="post-description mt-10"><div dangerouslySetInnerHTML={{__html: post.description}}></div></div>
           </div>
         ))}
+        {
+          !posts?.length && !isPostsLoading && !isPostsError ? <p>No posts found</p> : null
+        }
       </div>
     </div>
   )

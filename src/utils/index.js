@@ -1,4 +1,29 @@
-export const fetchFunc = (url, method, headers, data, navigate) =>
+import { Subject } from 'rxjs';
+
+const subject = new Subject();
+
+export const deniedAlertService = {
+    sendDeniedAlert: message => subject.next({ text: message }),
+    clearDeniedAlert: () => subject.next(),
+    onDeniedAlert: () => subject.asObservable()
+};
+
+const resourceAction = {
+    createPost: 'Create Post',
+    updatePost: 'Update Post',
+    deletePost: 'Delete Post',
+    createCategory: 'Create Category',
+    updateCategory: 'Update Category',
+    deleteCategory: 'Delete Category',
+    readPost: 'Read Post',
+    readCategory: 'Read Category',
+    readAllPosts: 'Read All Posts',
+    readAllCategories: 'Read All Categories',
+    changeStatus: 'Change Status',
+    default: 'Performed'
+}
+
+export const fetchFunc = (url, method, headers, data, navigate, action = null) =>
     fetch(url, {
         method,
         headers,
@@ -9,6 +34,11 @@ export const fetchFunc = (url, method, headers, data, navigate) =>
             localStorage.removeItem('email')
             navigate('/')
         }
+
+        if(res.status === 403) {
+            deniedAlertService.sendDeniedAlert(`You are not authorized to access the ${resourceAction[action ? action : 'default']} action.`)
+        }
+        
         return res.json()
     }
     )

@@ -8,9 +8,9 @@ module.exports = {
     },
     TOKEN_KEY: 'longSecretKey',
     PERMISSIONS: {
-        can_see_posts: ['/get-posts'],
-        can_see_categories: ['/get-categories'],
-        can_admin_posts: ['/create-post', '/update-post', '/delete-post'],
-        can_admin_categories: ['/create-category', '/update-category', '/delete-category']
+        can_see_posts: ['get-posts'],
+        can_see_categories: ['get-categories'],
+        can_admin_posts: ['add-post', 'update-post', 'delete-post', 'change-status'],
+        can_admin_categories: ['add-category', 'update-category', 'delete-category']
     }
 }

@@ -36,7 +36,12 @@ function Admin(props) {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
       'x-access-token': localStorage.getItem('token'),
-    }, null, navigate)
+    }, null, navigate, 'readAllCategories'),
+    {
+      refetchOnWindowFocus: false,
+      retryError: false,
+      refetchOnError: false
+    }
   )
 
   const { isLoading: postsLoading, isSuccess: postsSuccess, data: posts } = useQuery('posts', () =>
@@ -44,13 +49,18 @@ function Admin(props) {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
       'x-access-token': localStorage.getItem('token'),
-    }, null, navigate)
+    }, null, navigate, 'readAllPosts'),
+    {
+      refetchOnWindowFocus: false,
+      retryError: false,
+      refetchOnError: false
+    }
   )
 
   const { mutate: postMutate, isSuccess: postIsSuccess, isLoading: postIsLoading, isError: postIsError } = useMutation('add-post', (data) =>
     fetchFunc('http://localhost:3001/add-post', 'POST', {
       'x-access-token': localStorage.getItem('token'),
-    }, data, navigate)
+    }, data, navigate, 'addPost')
     , {
       onSuccess: (data, variables, context) => {
         queryClient.invalidateQueries('posts')
@@ -69,7 +79,7 @@ function Admin(props) {
       'x-access-token': localStorage.getItem('token'),
       'accept': 'application/json',
       'content-type': 'application/json'
-    }, JSON.stringify(data), navigate)
+    }, JSON.stringify(data), navigate, 'addCategory')
     , {
       onSuccess: (data, variables, context) => {
         queryClient.invalidateQueries('categories')
@@ -136,7 +146,7 @@ function Admin(props) {
       'x-access-token': localStorage.getItem('token'),
       'accept': 'application/json',
       'content-type': 'application/json'
-    }, null, navigate), {
+    }, null, navigate, 'deletePost'), {
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries('posts')
     }
@@ -148,7 +158,7 @@ function Admin(props) {
       'x-access-token': localStorage.getItem('token'),
       'accept': 'application/json',
       'content-type': 'application/json'
-    }, null, navigate), {
+    }, null, navigate, 'deleteCategory'), {
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries('categories')
       queryClient.invalidateQueries('posts')
@@ -161,7 +171,7 @@ function Admin(props) {
       'x-access-token': localStorage.getItem('token'),
       'accept': 'application/json',
       'content-type': 'application/json'
-    }, JSON.stringify(data), navigate)
+    }, JSON.stringify(data), navigate, 'changeStatus')
     , {
       onSuccess: (data, variables, context) => {
         queryClient.invalidateQueries('posts')
@@ -172,7 +182,7 @@ function Admin(props) {
   const { mutate: postUpdateMutate } = useMutation('update-post', (data) =>
     fetchFunc(`http://localhost:3001/update-post/${isPostUpdating}`, 'PUT', {
       'x-access-token': localStorage.getItem('token'),
-    }, data, navigate), {
+    }, data, navigate, 'updatePost'), {
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries('posts')
       setAddPostClicked(false)
@@ -191,7 +201,7 @@ function Admin(props) {
       'x-access-token': localStorage.getItem('token'),
       'accept': 'application/json',
       'content-type': 'application/json'
-    }, JSON.stringify(data), navigate), {
+    }, JSON.stringify(data), navigate, 'updateCategory'), {
     onSuccess: (data, variables, context) => {
       queryClient.invalidateQueries('categories')
       setAddCategoryClicked(false)
@@ -205,6 +215,7 @@ function Admin(props) {
   // dynamic table component
   const Table = ({ data, isCategory = false }) => {
     return (
+      <>
       <table className="table table-striped relative">
         <thead>
           <tr>
@@ -226,7 +237,7 @@ function Admin(props) {
           </tr>
         </thead>
         <tbody>
-          {data?.map(item => (
+          {data?.length && data?.map(item => (
             <tr key={item._id}>
               {
                 isCategory ?
@@ -267,9 +278,18 @@ function Admin(props) {
                 </button>
               </td>
             </tr>
-          ))}
+          ))
+          }
         </tbody>
       </table>
+
+      {
+        !data || !data?.length || data?.length === 0 ?
+        <div className="text-center m-5">
+          <h3 className="">No data found</h3>
+        </div> : <></>
+      }
+      </>
     )
   }
 
