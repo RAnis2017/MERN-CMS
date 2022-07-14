@@ -60,7 +60,7 @@ router.post('/login-google', function (req, res) {
   let email = req.body.email
   let name = req.body.name
   let userModel = mongoose.model('User');
-  userModel.findOne({ email: email }, async function (err, user) {
+  userModel.findOne({ email: email }).populate('permissions').exec(async (err, user) => {
     if (err) {
       console.log(err);
       res.status(500).json({ 'message': 'Internal server error' });
@@ -89,7 +89,7 @@ router.post('/login-google', function (req, res) {
         res.status(401).json({ 'message': 'Password incorrect' });
       } else {
         const token = jwt.sign(
-          { user_id: user._id, email },
+          { user_id: user._id, email, permissions: user.permissions },
           config.TOKEN_KEY,
           {
             expiresIn: "24h",
@@ -113,7 +113,7 @@ router.post('/login', function (req, res) {
   let email = req.body.email;
   let password = req.body.password;
   let user = mongoose.model('User');
-  user.findOne({ email: email }, function (err, user) {
+  user.findOne({ email: email }).populate('permissions').exec(async (err, user) => {
     if (err) {
       console.log(err);
       res.status(500).json({ 'message': 'Internal server error' });
@@ -128,7 +128,7 @@ router.post('/login', function (req, res) {
           res.status(401).json({ 'message': 'Password incorrect' });
         } else {
           const token = jwt.sign(
-            { user_id: user._id, email },
+            { user_id: user._id, email, permissions: user.permissions },
             config.TOKEN_KEY,
             {
               expiresIn: "24h",
