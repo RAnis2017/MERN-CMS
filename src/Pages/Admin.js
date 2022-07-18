@@ -4,12 +4,11 @@ import { connect } from "react-redux"
 import { useGoogleLogout } from 'react-google-login'
 import { useNavigate } from "react-router-dom"
 import { useMutation, useQuery, useQueryClient } from "react-query"
-import { faTrash, faPen, faCheck, faCancel, faImage } from "@fortawesome/free-solid-svg-icons"
+import { faTrash, faPen, faCheck, faCancel, faImage, faPlus, faTimes } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { fetchFunc } from "../utils"
-
 const clientId = '874157957573-9ghj35jep265q5u0ksfjr5mm22qmbb1k.apps.googleusercontent.com'
 
 function Admin(props) {
@@ -23,6 +22,8 @@ function Admin(props) {
   const [addCategoryName, setAddCategoryName] = useState('')
   const [isPostUpdating, setIsPostUpdating] = useState(false)
   const [isCategoryUpdating, setIsCategoryUpdating] = useState(false)
+
+  const [addCategoryFromPost, setAddCategoryFromPost] = useState(false)
   const queryClient = useQueryClient()
 
 
@@ -403,14 +404,32 @@ function Admin(props) {
                   <label className="label">
                     <span className="label-text text-white">Category</span>
                   </label>
-                  <select className="input input-ghost w-full max-w-md" value={addPostCategory} onChange={(e) => setAddPostCategory(e.target.value)}>
-                    <option value={''}>Select Category</option>
-                    {
-                      categories.map(item => (
-                        <option key={item._id} value={item._id}>{item.name}</option>
-                      ))
-                    }
-                  </select>
+                  <div className="flex justify-between content-center">
+                  {
+                    addCategoryFromPost === false ?
+                    <select className="input input-ghost w-full max-w-md" value={addPostCategory} onChange={(e) => setAddPostCategory(e.target.value)}>
+                      <option value={''}>Select Category</option>
+                      {
+                        categories.map(item => (
+                          <option key={item._id} value={item._id}>{item.name}</option>
+                        ))
+                      }
+                    </select> : 
+                    <input type="text" placeholder="Type here" value={addCategoryName} onChange={(e) => setAddCategoryName(e.target.value)} className="input input-ghost w-full max-w-md" />
+                  }
+                  
+                    <button className="btn btn-circle ml-3" onClick={() => setAddCategoryFromPost((prev) => !prev)}>
+                      {
+                        addCategoryFromPost ?
+                          addCategoryName.length > 0 ?
+                          <FontAwesomeIcon icon={faCheck} fontSize={20} className="text-green-400" />
+                          :
+                          <FontAwesomeIcon icon={faTimes} fontSize={20} className="text-red-400" />
+                          :
+                          <FontAwesomeIcon icon={faPlus} fontSize={20} />
+                      }
+                    </button>
+                  </div>
                 </div>
                 <div className="form-control w-full max-w-md">
                   <label className="label">
