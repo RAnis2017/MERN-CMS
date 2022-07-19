@@ -339,6 +339,21 @@ function Admin(props) {
     setAddPostImage(e.target.files[0])
   }
 
+  const setAddCategoryFromPostConditions = () => {
+
+    if(addCategoryFromPost && addCategoryName.length > 0) {
+      categoryMutate({ name: addCategoryName })
+
+      setAddCategoryName('')
+
+      setTimeout(() => {
+        setAddPostCategory(categories[categories.length - 1]._id)
+      }, 1000)
+    }
+
+    setAddCategoryFromPost((prev) => !prev)
+  }
+
   return (
     <div>
       <div className=" flex justify-between m-5">
@@ -418,7 +433,7 @@ function Admin(props) {
                     <input type="text" placeholder="Type here" value={addCategoryName} onChange={(e) => setAddCategoryName(e.target.value)} className="input input-ghost w-full max-w-md" />
                   }
                   
-                    <button className="btn btn-circle ml-3" onClick={() => setAddCategoryFromPost((prev) => !prev)}>
+                    <button className="btn btn-circle ml-3" onClick={() => setAddCategoryFromPostConditions()}>
                       {
                         addCategoryFromPost ?
                           addCategoryName.length > 0 ?
