@@ -237,7 +237,7 @@ function Admin(props) {
             <th className="sticky top-0">Actions</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className="">
           {data?.length && data?.map(item => (
             <tr key={item._id}>
               {

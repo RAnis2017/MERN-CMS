@@ -1,3 +1,4 @@
+require('dotenv').config()
 var express = require('express');
 var router = express.Router();
 const mongoose = require("mongoose");
@@ -14,6 +15,25 @@ const storage = multer.diskStorage({
     callBack(null, `${file.originalname}`)
   }
 })
+const nodemailer = require('nodemailer');
+
+let transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      type: 'OAuth2',
+      user: process.env.MAIL_USERNAME,
+      pass: process.env.MAIL_PASSWORD,
+      clientId: process.env.OAUTH_CLIENTID,
+      clientSecret: process.env.OAUTH_CLIENT_SECRET,
+      refreshToken: process.env.OAUTH_REFRESH_TOKEN
+    }
+});
+let mailOptions = {
+  from:  'admin@cms.com',
+  to:  'razaanis123@gmail.com',
+  subject:  'Zepcom CMS App',
+  text:  ''
+};
 
 let upload = multer({ dest: 'uploads/', storage }).single('image');
 //Middleware to log time for easy debugging when in development
@@ -172,7 +192,15 @@ router.post('/add-post', (req, res, next) => {
           console.log(err);
           res.status(500).json({ 'message': 'Internal server error' });
         } else {
-          res.status(200).json({ 'message': 'Post added' });
+          mailOptions.text = `A new post named ${body.title} has been added to the CMS react app`
+          transporter.sendMail(mailOptions, function(err, data) {
+            if (err) {
+              console.log("Error " + err);
+            } else {
+              console.log("Email sent successfully");
+              res.status(200).json({ 'message': 'Post added' });
+            }
+          });
         }
       });
     }
@@ -261,7 +289,15 @@ router.put('/update-post/:id', (req, res, next) => {
           console.log(err);
           res.status(500).json({ 'message': 'Internal server error' });
         } else {
-          res.status(200).json({ 'message': 'Post updated' });
+          mailOptions.text = `An old post has been updated named ${options.name} to the CMS react app`
+          transporter.sendMail(mailOptions, function(err, data) {
+            if (err) {
+              console.log("Error " + err);
+            } else {
+              console.log("Email sent successfully");
+              res.status(200).json({ 'message': 'Post updated' });
+            }
+          });
         }
       })
 
