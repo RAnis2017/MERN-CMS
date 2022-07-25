@@ -13,8 +13,11 @@ const verifyToken = (req, res, next) => {
 
     let isAuthorized = false;
     req.user.permissions.forEach(permission => {
-      let url = req.url.split("/")[1];
-      
+      let url = req.url
+      if(url.includes('/admin')){
+        url = url.replace('/admin', '')
+      }
+      url = url.split("/")[1];
       if(config.PERMISSIONS[permission.label] && config.PERMISSIONS[permission.label].includes(url)) {
         isAuthorized = true;
       }

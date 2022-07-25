@@ -9,11 +9,12 @@ import {
 } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from 'react-query'
 import Login from "./Pages/Login";
-import Admin from "./Pages/Admin";
+import PostsAdmin from "./Pages/PostsAdmin";
 import Posts from "./Pages/Posts";
 import { deniedAlertService } from './utils';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import CategoriesAdmin from "./Pages/CategoriesAdmin";
 
 const queryClient = new QueryClient()
 
@@ -49,7 +50,8 @@ function App({ isLoggedIn, email, token }) {
           <ToastContainer limit={1} />
           <Routes>
             <Route path="/" element={ <Login /> } />
-            <Route path="admin" element={ <Admin/> } />
+            <Route path="admin/posts" element={ <PostsAdmin/> } />
+            <Route path="admin/categories" element={ <CategoriesAdmin/> } />
             <Route path="posts" element={ <Posts/> } />
             <Route path="*" element={ <Login /> } />
           </Routes>

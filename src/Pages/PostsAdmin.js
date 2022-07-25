@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import "./Admin.css"
+import "./PostsAdmin.css"
 import { connect } from "react-redux"
 import { useGoogleLogout } from 'react-google-login'
 import { useNavigate } from "react-router-dom"
@@ -11,7 +11,7 @@ import 'react-quill/dist/quill.snow.css';
 import { fetchFunc } from "../utils"
 const clientId = '874157957573-9ghj35jep265q5u0ksfjr5mm22qmbb1k.apps.googleusercontent.com'
 
-function Admin(props) {
+function PostsAdmin(props) {
   const [addPostClicked, setAddPostClicked] = useState(false)
   const [addCategoryClicked, setAddCategoryClicked] = useState(false)
   const [addPostTitle, setAddPostTitle] = useState('')
@@ -59,7 +59,7 @@ function Admin(props) {
   )
 
   const { mutate: postMutate, isSuccess: postIsSuccess, isLoading: postIsLoading, isError: postIsError } = useMutation('add-post', (data) =>
-    fetchFunc('http://localhost:3001/add-post', 'POST', {
+    fetchFunc('http://localhost:3001/admin/add-post', 'POST', {
       'x-access-token': localStorage.getItem('token'),
     }, data, navigate, 'addPost')
     , {
@@ -76,7 +76,7 @@ function Admin(props) {
   )
 
   const { mutate: categoryMutate, isSuccess: categoryIsSuccess, isLoading: categoryIsLoading, isError: categoryIsError } = useMutation('add-category', (data) =>
-    fetchFunc('http://localhost:3001/add-category', 'POST', {
+    fetchFunc('http://localhost:3001/admin/add-category', 'POST', {
       'x-access-token': localStorage.getItem('token'),
       'accept': 'application/json',
       'content-type': 'application/json'
@@ -107,32 +107,20 @@ function Admin(props) {
     onFailure,
   })
 
-  const deleteCall = (id, isCategory) => {
-    if (isCategory) {
-      categoryMutateDelete.mutate({
-        id
-      })
-    } else {
-      postMutateDelete.mutate({
-        id
-      })
-    }
+  const deleteCall = (id) => {
+    postMutateDelete.mutate({
+      id
+    })
   }
 
-  const editCall = (id, isCategory) => {
-    if (isCategory) {
-      setAddCategoryClicked(true)
-      setAddCategoryName(categories.find(category => category._id === id).name)
-      setIsCategoryUpdating(id)
-    } else {
-      setAddPostClicked(true)
-      setAddPostTitle(posts.find(post => post._id === id).name)
-      setAddPostDescription(posts.find(post => post._id === id).description)
-      setAddPostCategory(posts.find(post => post._id === id).category._id)
-      setAddPostImage(posts.find(post => post._id === id).image_url)
-      setAddPostStatus(posts.find(post => post._id === id).status === 'true' ? true : false)
-      setIsPostUpdating(id)
-    }
+  const editCall = (id) => {
+    setAddPostClicked(true)
+    setAddPostTitle(posts.find(post => post._id === id).name)
+    setAddPostDescription(posts.find(post => post._id === id).description)
+    setAddPostCategory(posts.find(post => post._id === id).category._id)
+    setAddPostImage(posts.find(post => post._id === id).image_url)
+    setAddPostStatus(posts.find(post => post._id === id).status === 'true' ? true : false)
+    setIsPostUpdating(id)
   }
 
   const changeStatusCall = (id, status) => {
@@ -143,7 +131,7 @@ function Admin(props) {
   }
 
   const postMutateDelete = useMutation('delete-post', (data) =>
-    fetchFunc(`http://localhost:3001/delete-post/${data.id}`, 'DELETE', {
+    fetchFunc(`http://localhost:3001/admin/delete-post/${data.id}`, 'DELETE', {
       'x-access-token': localStorage.getItem('token'),
       'accept': 'application/json',
       'content-type': 'application/json'
@@ -154,21 +142,8 @@ function Admin(props) {
   }
   )
 
-  const categoryMutateDelete = useMutation('delete-category', (data) =>
-    fetchFunc(`http://localhost:3001/delete-category/${data.id}`, 'DELETE', {
-      'x-access-token': localStorage.getItem('token'),
-      'accept': 'application/json',
-      'content-type': 'application/json'
-    }, null, navigate, 'deleteCategory'), {
-    onSuccess: (data, variables, context) => {
-      queryClient.invalidateQueries('categories')
-      queryClient.invalidateQueries('posts')
-    }
-  }
-  )
-
   const postMutateChangeStatus = useMutation('change-status', (data) =>
-    fetchFunc(`http://localhost:3001/change-status/${data.id}`, 'PUT', {
+    fetchFunc(`http://localhost:3001/admin/change-status/${data.id}`, 'PUT', {
       'x-access-token': localStorage.getItem('token'),
       'accept': 'application/json',
       'content-type': 'application/json'
@@ -181,7 +156,7 @@ function Admin(props) {
   )
 
   const { mutate: postUpdateMutate } = useMutation('update-post', (data) =>
-    fetchFunc(`http://localhost:3001/update-post/${isPostUpdating}`, 'PUT', {
+    fetchFunc(`http://localhost:3001/admin/update-post/${isPostUpdating}`, 'PUT', {
       'x-access-token': localStorage.getItem('token'),
     }, data, navigate, 'updatePost'), {
     onSuccess: (data, variables, context) => {
@@ -197,84 +172,47 @@ function Admin(props) {
   }
   )
 
-  const { mutate: categoryUpdateMutate } = useMutation('update-category', (data) =>
-    fetchFunc(`http://localhost:3001/update-category/${isCategoryUpdating}`, 'PUT', {
-      'x-access-token': localStorage.getItem('token'),
-      'accept': 'application/json',
-      'content-type': 'application/json'
-    }, JSON.stringify(data), navigate, 'updateCategory'), {
-    onSuccess: (data, variables, context) => {
-      queryClient.invalidateQueries('categories')
-      setAddCategoryClicked(false)
-      setAddCategoryName('')
-      setIsCategoryUpdating(false)
-    }
-  }
-  )
-
-
   // dynamic table component
-  const Table = ({ data, isCategory = false }) => {
+  const Table = ({ data }) => {
     return (
       <>
       <table className="table table-striped relative">
         <thead>
           <tr>
-            {
-              isCategory ? <>
-                <th className="sticky top-0">Name</th>
-              </>
-                : <>
-                  <th className="sticky top-0">Title</th>
-                  <th className="sticky top-0">Author</th>
-                  <th className="sticky top-0">Slug</th>
-                  <th className="sticky top-0">Category</th>
-                  <th className="sticky top-0">Status</th>
-                  <th className="sticky top-0">Image</th>
-                </>
-            }
-
+            <th className="sticky top-0">Title</th>
+            <th className="sticky top-0">Author</th>
+            <th className="sticky top-0">Slug</th>
+            <th className="sticky top-0">Category</th>
+            <th className="sticky top-0">Status</th>
+            <th className="sticky top-0">Image</th>
             <th className="sticky top-0">Actions</th>
           </tr>
         </thead>
         <tbody className="">
           {data?.length && data?.map(item => (
             <tr key={item._id}>
-              {
-                isCategory ?
-                  <>
-                    <td>{item.name}</td>
-                  </> :
-                  <>
-                    <td className="truncate max-w-[200px]" title={item.name}>{item.name}</td>
-                    <td className="truncate max-w-[100px]" title={item.created_by?.name}>{item.created_by?.name}</td>
-                    <td className="truncate max-w-[100px]" title={item.slug}>{item.slug}</td>
-                    <td className="truncate max-w-[100px]" title={item.category?.name}>{item.category?.name}</td>
-                    <td className={`truncate max-w-xs ${item.status === 'true' ? 'text-green-400' : 'text-red-400'}`}>{item.status === 'true' ? 'Active' : 'Inactive'}</td>
-                    <td className="truncate max-w-xs">
-                      <a className="btn btn-sm btn-circle" title={item.image_url} href={`http://localhost:3001/${item.image_url}`} target="_blank">
-                        <FontAwesomeIcon icon={faImage} className="text-blue-400" />
-                      </a>
-                    </td>
-                  </>
-              }
-
+              <td className="truncate max-w-[200px]" title={item.name}>{item.name}</td>
+              <td className="truncate max-w-[100px]" title={item.created_by?.name}>{item.created_by?.name}</td>
+              <td className="truncate max-w-[100px]" title={item.slug}>{item.slug}</td>
+              <td className="truncate max-w-[100px]" title={item.category?.name}>{item.category?.name}</td>
+              <td className={`truncate max-w-xs ${item.status === 'true' ? 'text-green-400' : 'text-red-400'}`}>{item.status === 'true' ? 'Active' : 'Inactive'}</td>
+              <td className="truncate max-w-xs">
+                <a className="btn btn-sm btn-circle" title={item.image_url} href={`http://localhost:3001/${item.image_url}`} target="_blank">
+                  <FontAwesomeIcon icon={faImage} className="text-blue-400" />
+                </a>
+              </td>
               <td>
-                {
-                  isCategory ?
-                    <></> :
-                    <button className="btn btn-circle" onClick={() => changeStatusCall(item._id, item.status)}>
-                      {
-                        item.status === 'true' ?
-                          <FontAwesomeIcon className="text-red-400" icon={faCancel} /> :
-                          <FontAwesomeIcon className="text-green-400" icon={faCheck} />
-                      }
-                    </button>
-                }
-                <button className="btn btn-circle ml-2" onClick={() => editCall(item._id, isCategory)}>
+                <button className="btn btn-circle" onClick={() => changeStatusCall(item._id, item.status)}>
+                  {
+                    item.status === 'true' ?
+                      <FontAwesomeIcon className="text-red-400" icon={faCancel} /> :
+                      <FontAwesomeIcon className="text-green-400" icon={faCheck} />
+                  }
+                </button>
+                <button className="btn btn-circle ml-2" onClick={() => editCall(item._id)}>
                   <FontAwesomeIcon icon={faPen} />
                 </button>
-                <button className="btn btn-circle ml-2 text-red-400" onClick={() => deleteCall(item._id, isCategory)}>
+                <button className="btn btn-circle ml-2 text-red-400" onClick={() => deleteCall(item._id)}>
                   <FontAwesomeIcon icon={faTrash} />
                 </button>
               </td>
@@ -292,11 +230,6 @@ function Admin(props) {
       }
       </>
     )
-  }
-
-  const addNewCategory = () => {
-    setAddPostClicked(false)
-    setAddCategoryClicked((prev) => !prev)
   }
 
   const addNewPost = () => {
@@ -318,14 +251,6 @@ function Admin(props) {
       postUpdateMutate(data)
     } else {
       postMutate(data)
-    }
-  }
-
-  const saveNewCategory = () => {
-    if (isCategoryUpdating) {
-      categoryUpdateMutate({ name: addCategoryName })
-    } else {
-      categoryMutate({ name: addCategoryName })
     }
   }
 
@@ -363,19 +288,6 @@ function Admin(props) {
 
       <div className="flex justify-around flex-row flex-wrap">
         <div className=" h-80 overflow-scroll flex flex-col justify-center items-center">
-          <h1 className="mb-5">Categories</h1>
-          {
-            categoriesLoading ?
-              <div className="flex justify-center">
-                <div className="spinner-border text-primary" role="status">
-                  <span className="sr-only">Loading...</span>
-                </div>
-              </div>
-              : <></>
-          }
-          <Table data={categories} isCategory={true} />
-        </div>
-        <div className=" h-80 overflow-scroll flex flex-col justify-center items-center">
           <h1 className="mb-5">Posts</h1>
           <Table data={posts} />
         </div>
@@ -388,12 +300,6 @@ function Admin(props) {
               <button className="btn btn-success" onClick={() => saveNewPost()}>{postIsLoading ? 'Saving...' : isPostUpdating ? 'Update Post' : 'Save Post'}</button>
               :
               <button className="btn btn-primary" onClick={() => addNewPost()}>Add Post</button>
-          }
-          {
-            addCategoryClicked ?
-              <button className="btn btn-success ml-3" onClick={() => saveNewCategory()}>{categoryIsLoading ? 'Saving...' : isCategoryUpdating ? 'Update Category' : 'Save Category'}</button>
-              :
-              <button className="btn btn-primary ml-3" onClick={() => addNewCategory()}>Add Category</button>
           }
         </div>
       </div>
@@ -474,24 +380,6 @@ function Admin(props) {
           :
           <></>
       }
-
-      {
-        addCategoryClicked ?
-          <div className="flex justify-center mt-5 mb-10">
-            <div className="w-6/12 bg-slate-700 rounded-lg p-5 shadow-lg flex justify-center flex-row">
-              <div className="w-full max-w-md">
-                <div className="form-control w-full max-w-md">
-                  <label className="label">
-                    <span className="label-text text-white">Name</span>
-                  </label>
-                  <input type="text" placeholder="Type here" value={addCategoryName} onChange={(e) => setAddCategoryName(e.target.value)} className="input input-ghost w-full max-w-md" />
-                </div>
-              </div>
-            </div>
-          </div>
-          :
-          <></>
-      }
     </div>
   )
 }
@@ -508,4 +396,4 @@ const mapDispatchToProps = dispatch => {
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(Admin)
+export default connect(mapStateToProps, mapDispatchToProps)(PostsAdmin)

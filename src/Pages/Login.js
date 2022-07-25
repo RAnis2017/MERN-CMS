@@ -56,7 +56,7 @@ function Login(props) {
     ), {
     onSuccess: (data, variables, context) => {
       setTokenAction(data.token)
-      navigate("/admin");
+      navigate('/admin/posts');
     }
     }
   )
@@ -67,7 +67,7 @@ function Login(props) {
     if(token) {
       setTokenAction(token)
       googleSignInSuccess(emailL)
-      navigate("/admin");
+      navigate('/admin/posts');
     }
 
     function start() {
