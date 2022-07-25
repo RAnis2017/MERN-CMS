@@ -3,10 +3,8 @@ import { connect } from "react-redux"
 import { useGoogleLogout } from 'react-google-login'
 import { useNavigate } from "react-router-dom"
 import { useMutation, useQuery, useQueryClient } from "react-query"
-import { faTrash, faPen, faCheck, faCancel, faImage, faPlus, faTimes } from "@fortawesome/free-solid-svg-icons"
+import { faTrash, faPen } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
 import { fetchFunc } from "../utils"
 const clientId = '874157957573-9ghj35jep265q5u0ksfjr5mm22qmbb1k.apps.googleusercontent.com'
 

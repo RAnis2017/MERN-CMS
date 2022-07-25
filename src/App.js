@@ -4,8 +4,7 @@ import { connect } from "react-redux"
 import {
   BrowserRouter as Router,
   Routes,
-  Route,
-  useNavigate
+  Route
 } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from 'react-query'
 import Login from "./Pages/Login";
@@ -15,6 +14,7 @@ import { deniedAlertService } from './utils';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import CategoriesAdmin from "./Pages/CategoriesAdmin";
+import UsersAdmin from "./Pages/UsersAdmin";
 
 const queryClient = new QueryClient()
 
@@ -53,6 +53,7 @@ function App({ isLoggedIn, email, token }) {
             <Route path="admin/posts" element={ <PostsAdmin/> } />
             <Route path="admin/categories" element={ <CategoriesAdmin/> } />
             <Route path="posts" element={ <Posts/> } />
+            <Route path="admin/users" element={ <UsersAdmin/> } />
             <Route path="*" element={ <Login /> } />
           </Routes>
         </div>
