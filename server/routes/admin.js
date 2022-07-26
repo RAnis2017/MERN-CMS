@@ -194,7 +194,9 @@ router.put('/change-status/:id', (req, res, next) => {
 
 router.get('/users', (req, res, next) => {
     let userModel = mongoose.model('User');
-    userModel.find({}).populate('permissions').exec(async (err, users) => {
+    userModel.find({
+        email: { $ne: req.user.email }
+    }).populate('permissions').exec(async (err, users) => {
         if (err) {
             console.log(err);
             res.status(500).json({ 'message': 'Internal server error' });
@@ -221,14 +223,11 @@ router.get('/permissions', (req, res, next) => {
 
 router.put('/add-user-permission/:id', async (req, res, next) => {
     let userModel = mongoose.model('User');
-    let permissionModel = mongoose.model('Permission');
     let userId = req.params.id;
-    let permissionId = req.body.permission;
+    let permissions = req.body.permissions;
 
-    let user = await userModel.updateOne({ _id: userId }, {
-        $push: {
-            permissions: permissionId
-        }
+    userModel.updateOne({ _id: userId }, {
+        permissions: permissions,
     }, (err, user) => {
         if (err) {
             console.log(err);

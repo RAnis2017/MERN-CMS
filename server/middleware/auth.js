@@ -18,7 +18,7 @@ const verifyToken = (req, res, next) => {
         url = url.replace('/admin', '')
       }
       url = url.split("/")[1];
-      if(config.PERMISSIONS[permission.label] && config.PERMISSIONS[permission.label].includes(url)) {
+      if((config.PERMISSIONS[permission.label] && config.PERMISSIONS[permission.label].includes(url)) || url.includes('get-user-permissions')) {
         isAuthorized = true;
       }
     })
@@ -30,6 +30,7 @@ const verifyToken = (req, res, next) => {
   } catch (err) {
     return res.status(401).send("Invalid Token");
   }
+
   return next();
 };
 

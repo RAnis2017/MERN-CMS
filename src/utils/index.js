@@ -20,7 +20,10 @@ const resourceAction = {
     readAllPosts: 'Read All Posts',
     readAllCategories: 'Read All Categories',
     changeStatus: 'Change Status',
-    default: 'Performed'
+    readAllUsers: 'Read All Users',
+    readAllPermissions: 'Read All Permissions',
+    updateUserPermissions: 'Update User Permissions',
+    default: 'Performed',
 }
 
 export const fetchFunc = (url, method, headers, data, navigate, action = null) =>
@@ -32,7 +35,9 @@ export const fetchFunc = (url, method, headers, data, navigate, action = null) =
         if (res.status === 401) {
             localStorage.removeItem('token')
             localStorage.removeItem('email')
-            navigate('/')
+            if(navigate) {
+                navigate('/')
+            }
         }
 
         if(res.status === 403) {

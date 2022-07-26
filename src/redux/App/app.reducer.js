@@ -1,9 +1,10 @@
-import { LoginSuccess, GoogleSignIn, SetToken } from './app.types';
+import { LoginSuccess, GoogleSignIn, SetToken, SetPermissions } from './app.types';
 
 const INITIAL_STATE = {
     email: '',
     isLoggedIn: false,
     token: '',
+    permissions: [],
 };
 
 const reducer = (state = INITIAL_STATE, action) => {
@@ -22,6 +23,10 @@ const reducer = (state = INITIAL_STATE, action) => {
             localStorage.setItem('token', action.payload);
             return {
                 ...state, token: action.payload,
+            };
+        case SetPermissions:
+            return {
+                ...state, permissions: action.payload,
             };
         default: return state;
     }

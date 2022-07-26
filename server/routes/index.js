@@ -90,7 +90,8 @@ router.post('/login-google', function (req, res) {
 
         let loggedInUser = {
           token,
-          email
+          email,
+          permissions: user.permissions
         };
 
         res.status(200).json(loggedInUser);
@@ -129,7 +130,8 @@ router.post('/login', function (req, res) {
 
           let loggedInUser = {
             token,
-            email
+            email,
+            permissions: user.permissions
           };
 
           res.status(200).json(loggedInUser);
@@ -180,6 +182,16 @@ router.get('/get-post/:id', (req, res, next) => {
     }
   })
 })
+
+router.get('/get-user-permissions', (req, res, next) => {
+  if (!req.user) {
+    console.log(err);
+    res.status(500).json({ 'message': 'Internal server error' });
+  } else {
+    res.status(200).json(req.user.permissions);
+  }
+}
+)
 
 router.use('/admin', adminRoutes);
 
