@@ -44,10 +44,6 @@ function Posts(props) {
 
   return (
     <div>
-      <div className=" flex justify-between m-5">
-        <button className="btn btn-ghost" onClick={() => navigate('/admin')}>Admin</button>
-        <button className="btn btn-warning" onClick={() => signOut()}>Logout</button>
-      </div>
       <div className="posts-container flex justify-center content-center flex-wrap flex-col">
         {isPostsLoading ? <p>Loading...</p> : null}
         {isPostsError ? <p>Error</p> : null}

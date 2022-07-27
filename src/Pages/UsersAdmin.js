@@ -164,11 +164,6 @@ function UsersAdmin(props) {
 
   return (
     <div>
-      <div className=" flex justify-between m-5">
-        <button className="btn btn-ghost underline" onClick={() => navigate('/posts')}>Posts</button>
-        <button className="btn btn-warning" onClick={() => signOut()}>Logout</button>
-      </div>
-
       <div className="flex justify-around flex-row flex-wrap">
         <div className=" h-80 overflow-scroll flex flex-col justify-center items-center">
           <h1 className="mb-5">Users</h1>

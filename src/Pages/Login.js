@@ -35,7 +35,7 @@ function Login(props) {
      ), {
       onSuccess: (data, variables, context) => {
         setTokenAction(data.token)
-        navigate("/admin");
+        navigate("/posts");
       }
      }
    )
@@ -56,7 +56,7 @@ function Login(props) {
     ), {
     onSuccess: (data, variables, context) => {
       setTokenAction(data.token)
-      navigate('/admin/posts');
+      navigate('/posts');
     }
     }
   )
