@@ -64,7 +64,7 @@ function Posts(props) {
               {post.category.name}
             </div>
             <div className="post-img flex justify-center content-center mt-5">
-              <img src={`http://localhost:3001/${post.image_url}`} className="rounded-lg shadow-lg" alt={post.slug} />
+              <img src={`http://localhost:3001/${post.image_urls?.[0]}`} className="rounded-lg shadow-lg" alt={post.slug} />
             </div>
             <div className="post-description mt-10"><div dangerouslySetInnerHTML={{__html: post.description}}></div></div>
           </div>

@@ -118,7 +118,7 @@ function PostsAdmin(props) {
     setAddPostTitle(posts.find(post => post._id === id).name)
     setAddPostDescription(posts.find(post => post._id === id).description)
     setAddPostCategory(posts.find(post => post._id === id).category._id)
-    setAddPostImage(posts.find(post => post._id === id).image_url)
+    setAddPostImage(posts.find(post => post._id === id).image_urls?.[0])
     setAddPostStatus(posts.find(post => post._id === id).status === 'true' ? true : false)
     setIsPostUpdating(id)
   }
@@ -197,7 +197,7 @@ function PostsAdmin(props) {
               <td className="truncate max-w-[100px]" title={item.category?.name}>{item.category?.name}</td>
               <td className={`truncate max-w-xs ${item.status === 'true' ? 'text-green-400' : 'text-red-400'}`}>{item.status === 'true' ? 'Active' : 'Inactive'}</td>
               <td className="truncate max-w-xs">
-                <a className="btn btn-sm btn-circle" title={item.image_url} href={`http://localhost:3001/${item.image_url}`} target="_blank">
+                <a className="btn btn-sm btn-circle" title={item.image_url?.[0]} href={`http://localhost:3001/${item.image_url?.[0]}`} target="_blank">
                   <FontAwesomeIcon icon={faImage} className="text-blue-400" />
                 </a>
               </td>
@@ -240,7 +240,7 @@ function PostsAdmin(props) {
   const saveNewPost = () => {
     const data = new FormData()
     const image = addPostImage
-    data.append('image', image)
+    data.append('images', image)
     data.append('title', addPostTitle)
     data.append('description', addPostDescription)
     data.append('category', addPostCategory)
@@ -367,7 +367,7 @@ function PostsAdmin(props) {
                   <label className="label">
                     <span className="label-text text-white">Image</span>
                   </label>
-                  <input type="file" name="image" placeholder="Insert Post Image" onChange={(e) => addImageToPost(e)} className="input input-ghost w-full max-w-md" />
+                  <input type="file" multiple='multiple' accept='image/*' name='images' id='file'  placeholder="Insert Post Image" onChange={(e) => addImageToPost(e)} className="input input-ghost w-full max-w-md" />
                 </div>
               </div>
             </div>

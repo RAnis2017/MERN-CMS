@@ -33,21 +33,41 @@ let mailOptions = {
 
 let upload = multer({ dest: 'uploads/', storage }).single('image');
 
+const multi_upload = multer({
+    dest: 'uploads/',
+    storage,
+    limits: { fileSize: 1 * 1024 * 1024 }, // 1MB
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype == "image/png" || file.mimetype == "image/jpg" || file.mimetype == "image/jpeg") {
+            cb(null, true);
+        } else {
+            cb(null, false);
+            const err = new Error('Only .png, .jpg and .jpeg format allowed!')
+            err.name = 'ExtensionError'
+            return cb(err);
+        }
+    },
+}).array('images', 10)
+
 
 router.post('/add-post', (req, res, next) => {
-    upload(req, res, function (err) {
+    multi_upload(req, res, function (err) {
         if (err) {
             console.log(err)
         } else {
-            let fileName = req?.file?.filename ? req.file.filename : '';
+            let fileNames = []
+            for (let i = 0; i < req.files.length; i++) {
+                fileNames.push(req.files[i].filename)
+            }
             let body = req.body;
-            console.log(req.body.category, fileName);
+            console.log(req.body.category, fileNames);
 
             let postModel = mongoose.model('Post');
             postModel.create({
                 name: body.title,
                 description: body.description,
-                image_url: fileName,
+                image_urls: fileNames,
+                featured_image_index: body.featured_image_index ? body.featured_image_index : 0,
                 slug: body.slug,
                 created_by: req.user.user_id,
                 category: body.category,
@@ -63,9 +83,9 @@ router.post('/add-post', (req, res, next) => {
                             console.log("Error " + err);
                         } else {
                             console.log("Email sent successfully");
-                            res.status(200).json({ 'message': 'Post added' });
                         }
                     });
+                    res.status(200).json({ 'message': 'Post added' });
                 }
             });
         }
@@ -91,12 +111,12 @@ router.post('/add-category', (req, res, next) => {
 
 router.put('/update-post/:id', (req, res, next) => {
     let postModel = mongoose.model('Post');
-    upload(req, res, function (err) {
+    multi_upload(req, res, function (err) {
         if (err) {
             console.log(err)
         } else {
             let body = req.body;
-            let fileName = ''
+            let fileNames = []
 
             let options = {
                 name: body.title,
@@ -105,9 +125,12 @@ router.put('/update-post/:id', (req, res, next) => {
                 category: body.category,
                 status: body.status === 'true' ? true : false,
             }
-            if (req.file && req.file.filename) {
-                fileName = req.file.filename
-                options['image_url'] = fileName
+            if (req.files && req.files.length) {
+                for (let i = 0; i < req.files.length; i++) {
+                    fileNames.push(req.files[i].filename)
+                }
+                options['image_urls'] = fileNames
+                options['featured_image_index'] = body.featured_image_index ? body.featured_image_index : 0
             }
 
             postModel.updateOne({ _id: req.params.id }, options, (err, post) => {
@@ -121,9 +144,9 @@ router.put('/update-post/:id', (req, res, next) => {
                             console.log("Error " + err);
                         } else {
                             console.log("Email sent successfully");
-                            res.status(200).json({ 'message': 'Post updated' });
                         }
                     });
+                    res.status(200).json({ 'message': 'Post updated' });
                 }
             })
 

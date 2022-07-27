@@ -14,8 +14,11 @@ const PostSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    image_url: {
-        type: String,
+    image_urls: {
+        type: [String],
+    },
+    featured_image_index: {
+        type: Number,
     },
     status: {
         type: String,
