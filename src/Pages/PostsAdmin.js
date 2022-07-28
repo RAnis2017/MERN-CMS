@@ -21,7 +21,8 @@ function PostsAdmin(props) {
   const [addPostStatus, setAddPostStatus] = useState('')
   const [addCategoryName, setAddCategoryName] = useState('')
   const [isPostUpdating, setIsPostUpdating] = useState(false)
-  const [isCategoryUpdating, setIsCategoryUpdating] = useState(false)
+  const [uploadMultiple, setUploadMultiple] = useState([])
+  const [featuredImageIndex, setFeaturedImageIndex] = useState(0);
 
   const [addCategoryFromPost, setAddCategoryFromPost] = useState(false)
   const queryClient = useQueryClient()
@@ -29,8 +30,16 @@ function PostsAdmin(props) {
 
   //Editor
 
-  const [value, setValue] = useState('');
-
+  async function createFile(url){
+    let response = await fetch(`http://localhost:3001/${url}`);
+    let data = await response.blob();
+    let metadata = {
+      type: 'image/jpeg'
+    };
+    let file = new File([data], url, metadata);
+    
+    return file
+  }
 
   const { isLoading: categoriesLoading, isSuccess: categoriesSuccess, data: categories } = useQuery('categories', () =>
     fetchFunc('http://localhost:3001/get-categories', 'GET', {
@@ -54,7 +63,12 @@ function PostsAdmin(props) {
     {
       refetchOnWindowFocus: false,
       retryError: false,
-      refetchOnError: false
+      refetchOnError: false,
+      onSuccess: (data) => {
+        // data.map((item) => {
+        //   item.image_urls
+        // })
+      }
     }
   )
 
@@ -70,6 +84,8 @@ function PostsAdmin(props) {
         setAddPostDescription('')
         setAddPostCategory('')
         setAddPostImage('')
+        setUploadMultiple([])
+        setFeaturedImageIndex(0)
         setAddPostStatus('')
       }
     }
@@ -118,9 +134,31 @@ function PostsAdmin(props) {
     setAddPostTitle(posts.find(post => post._id === id).name)
     setAddPostDescription(posts.find(post => post._id === id).description)
     setAddPostCategory(posts.find(post => post._id === id).category._id)
-    setAddPostImage(posts.find(post => post._id === id).image_urls?.[0])
     setAddPostStatus(posts.find(post => post._id === id).status === 'true' ? true : false)
+    setFeaturedImageIndex(posts.find(post => post._id === id).featured_image_index)
+    setFeaturedImageIndex(0)
     setIsPostUpdating(id)
+    debugger
+    let post = posts.find(post => post._id === id)
+    let images = []
+    Promise.all(post.image_urls.map(async (image) => {
+      return new Promise(async (resolve,reject) => {
+        let img = await createFile(image)
+        images.push(img)
+        resolve()
+      })
+    })).then((res) => {
+      setAddPostImage(images)
+      let imagesTemp = []
+      for(let i = 0; i < images.length; i++) {
+        imagesTemp.push({
+          name: images[i].name, 
+          image: URL.createObjectURL(images[i]), 
+        })
+      }
+      setUploadMultiple(imagesTemp)
+    })
+
   }
 
   const changeStatusCall = (id, status) => {
@@ -167,6 +205,7 @@ function PostsAdmin(props) {
       setAddPostCategory('')
       setAddPostImage('')
       setAddPostStatus('')
+      setUploadMultiple([])
       setIsPostUpdating(false)
     }
   }
@@ -176,7 +215,7 @@ function PostsAdmin(props) {
   const Table = ({ data }) => {
     return (
       <>
-      <table className="table table-striped relative">
+      <table className="table table-striped relative z-0">
         <thead>
           <tr>
             <th className="sticky top-0">Title</th>
@@ -197,7 +236,7 @@ function PostsAdmin(props) {
               <td className="truncate max-w-[100px]" title={item.category?.name}>{item.category?.name}</td>
               <td className={`truncate max-w-xs ${item.status === 'true' ? 'text-green-400' : 'text-red-400'}`}>{item.status === 'true' ? 'Active' : 'Inactive'}</td>
               <td className="truncate max-w-xs">
-                <a className="btn btn-sm btn-circle" title={item.image_url?.[0]} href={`http://localhost:3001/${item.image_url?.[0]}`} target="_blank">
+                <a className="btn btn-sm btn-circle" title={item.image_url?.[0]} href={`http://localhost:3001/${item.image_urls?.[0]}`} target="_blank">
                   <FontAwesomeIcon icon={faImage} className="text-blue-400" />
                 </a>
               </td>
@@ -239,13 +278,17 @@ function PostsAdmin(props) {
 
   const saveNewPost = () => {
     const data = new FormData()
-    const image = addPostImage
-    data.append('images', image)
+    if (addPostImage.length != 0) {
+      for (const single_file of addPostImage) {
+          data.append('images', single_file)
+      }
+    }
     data.append('title', addPostTitle)
     data.append('description', addPostDescription)
     data.append('category', addPostCategory)
     data.append('slug', convertToSlug(addPostTitle))
     data.append('status', addPostStatus)
+    data.append('featured_image_index', featuredImageIndex)
 
     if (isPostUpdating) {
       postUpdateMutate(data)
@@ -261,7 +304,17 @@ function PostsAdmin(props) {
   }
 
   const addImageToPost = (e) => {
-    setAddPostImage(e.target.files[0])
+    setAddPostImage(e.target.files)
+    let images = []
+    for(let i = 0; i < e.target.files.length; i++) {
+      images.push({
+        name: e.target.files[i].name, 
+        image: URL.createObjectURL(e.target.files[i]), 
+      })
+    }
+
+    setUploadMultiple(images)
+    
   }
 
   const setAddCategoryFromPostConditions = () => {
@@ -280,7 +333,7 @@ function PostsAdmin(props) {
   }
 
   return (
-    <div>
+    <div className="mb-16">
       <div className="flex justify-around flex-row flex-wrap">
         <div className=" h-80 overflow-scroll flex flex-col justify-center items-center">
           <h1 className="mb-5">Posts</h1>
@@ -368,6 +421,15 @@ function PostsAdmin(props) {
                     <span className="label-text text-white">Image</span>
                   </label>
                   <input type="file" multiple='multiple' accept='image/*' name='images' id='file'  placeholder="Insert Post Image" onChange={(e) => addImageToPost(e)} className="input input-ghost w-full max-w-md" />
+                </div>
+                <div className="flex flex-wrap">
+                  {
+                    uploadMultiple.map((image, index) => <span className="flex justify-center content-center  mr-2"><img
+                    className={`${index === featuredImageIndex ? 'border-red-600' : 'border-red-400'}  hover:border-red-600 border-8`}
+                    src={image.image} width="100"
+                    onClick={() => setFeaturedImageIndex(index)}
+                    /></span>)
+                  }
                 </div>
               </div>
             </div>

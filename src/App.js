@@ -94,7 +94,7 @@ const AppOutlet = ({ setPermissions }) => {
             </div>
           </nav>
         </header>
-        <main className="my-10">
+        <main className="my-20">
           <Outlet />
         </main>
         <footer class="fixed inset-x-0 bottom-0 bg-gray-800">

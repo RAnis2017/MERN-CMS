@@ -64,9 +64,19 @@ function Posts(props) {
               {post.category.name}
             </div>
             <div className="post-img flex justify-center content-center mt-5">
-              <img src={`http://localhost:3001/${post.image_urls?.[0]}`} className="rounded-lg shadow-lg" alt={post.slug} />
+              <img src={`http://localhost:3001/${post.image_urls?.[post.featured_image_index]}`} className="rounded-lg shadow-lg" alt={post.slug} />
             </div>
             <div className="post-description mt-10"><div dangerouslySetInnerHTML={{__html: post.description}}></div></div>
+         
+            <div className="post-img flex justify-center content-center mt-5">
+              {
+                post?.image_urls?.map((image, index) =>  <img 
+                src={`http://localhost:3001/${image}`} 
+                className="rounded-lg shadow-lg mr-2" alt={post.slug}
+                width="200" />
+                )
+              }
+            </div>
           </div>
         ))}
         {
