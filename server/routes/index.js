@@ -7,6 +7,7 @@ const auth = require("../middleware/auth");
 const jwt = require("jsonwebtoken");
 const config = require('../config');
 const adminRoutes = require('./admin');
+const ObjectId = require('mongodb').ObjectId;
 
 //Middleware to log time for easy debugging when in development
 router.use(function timeLog(req, res, next) {
@@ -158,14 +159,42 @@ router.get('/get-categories', (req, res, next) => {
 router.get('/get-posts', (req, res, next) => {
   let postModel = mongoose.model('Post');
   let userModel = mongoose.model('User');
+  let likeDislikeModel = mongoose.model('LikeDislike');
   let categoryModel = mongoose.model('Category');
-  postModel.find({}).populate({ path: 'created_by', model: userModel }).populate({ path: 'category', model: categoryModel }).exec((err, posts) => {
+  
+  const isAdmin = req.user.permissions.find((permission) =>  permission.label === 'can_admin_posts');
+
+  postModel.aggregate([
+    {
+      $lookup: {
+        from: likeDislikeModel.collection.name,
+        localField: '_id',
+        foreignField: 'postId',
+        pipeline: isAdmin ? [] : [
+          { $match: { created_by:  ObjectId(req.user.user_id) } },
+        ],
+        as: 'likesDislikes'
+      }
+    }
+  ]).exec((err, results) => {
     if (err) {
       console.log(err);
       res.status(500).json({ 'message': 'Internal server error' });
-    } else {
-      res.status(200).json(posts);
     }
+    postModel.populate(results, { path: 'created_by', model: userModel }, (err, posts) => {
+      if (err) {
+        console.log(err);
+        res.status(500).json({ 'message': 'Internal server error' });
+      }
+      postModel.populate(posts, { path: 'category', model: categoryModel }, (err, posts) => {
+        if (err) {
+          console.log(err);
+          res.status(500).json({ 'message': 'Internal server error' });
+        } else {
+          res.status(200).json(posts);
+        }
+      })
+    })
   })
 })
 
@@ -190,6 +219,85 @@ router.get('/get-user-permissions', (req, res, next) => {
   } else {
     res.status(200).json(req.user.permissions);
   }
+}
+)
+
+router.put('/like-dislike-posts', (req, res, next) => {
+  let likeDislikeModel = mongoose.model('LikeDislike')
+  const postId = req.body.postId
+  const created_by = req.user.user_id
+  const liked = req.body.isLiked
+  likeDislikeModel.findOne({
+    created_by,
+    postId
+  }, (err, likeDislikes) => {
+    if(err) {
+      console.log(err);
+      res.status(500).json({ 'message': 'Internal server error' });
+    } else {
+      if(!likeDislikes) {
+        likeDislikeModel.create({
+          postId,
+          created_by,
+          liked
+        }, (err, likeDislikes) => {
+          if(err) {
+            console.log(err);
+            res.status(500).json({ 'message': 'Internal server error' });
+          }
+          res.status(200).json(likeDislikes)
+        })
+      } else {
+        likeDislikeModel.updateOne({ postId, created_by }, {
+          liked
+      }, (err, likeDislike) => {
+          if (err) {
+              console.log(err);
+              res.status(500).json({ 'message': 'Internal server error' });
+          } else {
+              res.status(200).json({ 'message': 'LikeDislike updated' });
+          }
+      })
+      }
+    }
+  })
+  
+})
+
+router.post('/create-tracking', (req, res, next) => {
+  let trackingModel = mongoose.model('Tracking')
+  const postId = req.body.postId
+  const created_by = req.user.user_id
+  const action = req.body.action
+  trackingModel.findOne({
+    created_by,
+    postId,
+    created_date: { $eq: new Date().toISOString().split('T')[0] }
+  }, (err, tracking) => {
+    if (err) {
+      console.log(err);
+      res.status(500).json({ 'message': 'Internal server error' });
+    } else {
+      if (!tracking) {
+
+        trackingModel.create({
+          postId,
+          created_by,
+          created_date: new Date().toISOString().split('T')[0],
+          action
+        }, (err, tracking) => {
+          if (err) {
+            console.log(err);
+            res.status(500).json({ 'message': 'Internal server error' });
+          } else {
+            res.status(200).json({ 'message': 'Tracking created' });
+          }
+        })
+      } else {
+        res.status(200).json({ 'message': 'Tracking not updated' });
+      }
+    }
+  })
 }
 )
 

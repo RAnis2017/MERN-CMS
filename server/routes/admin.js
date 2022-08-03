@@ -51,7 +51,6 @@ const multi_upload = multer({
 
 
 router.post('/add-post', (req, res, next) => {
-    console.log(req.files)
     multi_upload(req, res, function (err) {
         if (err) {
             console.log(err)

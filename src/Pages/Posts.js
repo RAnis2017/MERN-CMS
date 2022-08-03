@@ -1,10 +1,9 @@
 import React from "react"
 import "./Posts.css"
 import { connect } from "react-redux"
-import { useGoogleLogout } from 'react-google-login'
 import { useNavigate } from "react-router-dom"
-import { useQuery } from "react-query"
-import { faUser, faCalendar, faDna } from "@fortawesome/free-solid-svg-icons"
+import { useQuery, useMutation, useQueryClient } from "react-query"
+import { faUser, faCalendar, faDna, faThumbsUp, faThumbsDown } from "@fortawesome/free-solid-svg-icons"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { fetchFunc } from "../utils"
 
@@ -12,21 +11,8 @@ const clientId = '874157957573-9ghj35jep265q5u0ksfjr5mm22qmbb1k.apps.googleuserc
 
 function Posts(props) {
   const navigate = useNavigate()
-  const onLogoutSuccess = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('email')
-    navigate('/')
-  }
+  const queryClient = useQueryClient()
 
-  const onFailure = () => {
-    console.log('logout failed')
-  }
-
-  const { signOut } = useGoogleLogout({
-    clientId,
-    onLogoutSuccess,
-    onFailure,
-  })
 
   const { data: posts, isLoading: isPostsLoading, isError: isPostsError } = useQuery('posts', () => 
     fetchFunc(`http://localhost:3001/get-posts`, 'GET', {
@@ -40,7 +26,48 @@ function Posts(props) {
       retryError: false,
       refetchOnError: false
     }
+  )   
+
+  const { mutate: likedMutate } = useMutation('like-post', (data) =>
+    fetchFunc('http://localhost:3001/like-dislike-posts', 'PUT', {
+      'x-access-token': localStorage.getItem('token'),
+      'accept': 'application/json',
+      'content-type': 'application/json'
+    }, JSON.stringify(data), navigate, 'likePosts')
+    , {
+      onSuccess: (data, variables, context) => {
+        queryClient.invalidateQueries('posts')
+      }
+    }
   )
+
+  const likeUnlike = (postId, isLiked) => {
+    likedMutate({
+      postId,
+      isLiked
+    })
+  }
+
+  const { mutate: trackingMutate } = useMutation('tracking-action', (data) =>
+    fetchFunc('http://localhost:3001/create-tracking', 'POST', {
+      'x-access-token': localStorage.getItem('token'),
+      'accept': 'application/json',
+      'content-type': 'application/json'
+    }, JSON.stringify(data), navigate, 'trackingAction')
+    , {
+      onSuccess: (data, variables, context) => {
+      }
+    }
+  )
+
+  const trackingInfoCapture = (postId, action) => {
+    setTimeout(() => {
+      trackingMutate({
+        postId,
+        action
+      })
+    }, 1000)
+  }
 
   return (
     <div>
@@ -48,9 +75,13 @@ function Posts(props) {
         {isPostsLoading ? <p>Loading...</p> : null}
         {isPostsError ? <p>Error</p> : null}
         {posts?.length && posts?.map(post => (
-          <div className="post-container p-5 bg-white max-w-4xl rounded-xl shadow-xl mb-10" key={post._id}>
-            <div className="post-title text-2xl">
+          <div className="post-container p-5 bg-white max-w-4xl rounded-xl shadow-xl mb-10" key={post._id} onMouseOver={() => trackingInfoCapture(post._id, 'post-hovered')}>
+            <div className="post-title text-2xl flex justify-between">
               <h1>{post.name}</h1>
+              <div>
+                <FontAwesomeIcon icon={faThumbsUp} onClick={() => likeUnlike(post._id, true)} className={`text-gray-400 hover:text-gray-500 active:text-blue-500 mr-5 ${post.likesDislikes.length > 0 ? post.likesDislikes?.[0]?.liked ? 'text-blue-500' : '' : ''}`} />
+                <FontAwesomeIcon icon={faThumbsDown} onClick={() => likeUnlike(post._id, false)} className={`text-gray-400 hover:text-gray-500 active:text-red-500  ${post.likesDislikes.length > 0 ? post.likesDislikes?.[0]?.liked ? '' : 'text-red-500': ''}`} />
+              </div>
             </div>
             <div className="post-date">
               <FontAwesomeIcon icon={faCalendar} className="mr-5" />

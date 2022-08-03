@@ -9,6 +9,17 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { fetchFunc } from "../utils"
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import { Bar } from 'react-chartjs-2';
+
 const clientId = '874157957573-9ghj35jep265q5u0ksfjr5mm22qmbb1k.apps.googleusercontent.com'
 
 function PostsAdmin(props) {
@@ -25,10 +36,59 @@ function PostsAdmin(props) {
   const [featuredImageIndex, setFeaturedImageIndex] = useState(0);
 
   const [addCategoryFromPost, setAddCategoryFromPost] = useState(false)
+  const [chartLabels, setChartLabels] = useState([])
+  const [chartData, setChartData] = useState([])
   const queryClient = useQueryClient()
 
 
-  //Editor
+  //Chart JS Options
+  ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    Title,
+    Tooltip,
+    Legend
+  );
+  
+  const options = {
+    plugins: {
+      title: {
+        display: true,
+        text: 'Posts Likes/Dislikes Interaction Per User',
+        color: '#fff',
+        font: {
+          size: 20,
+          weight: 'bold',
+        }
+      },
+    },
+    responsive: true,
+    interaction: {
+      mode: 'index',
+      intersect: false,
+    },
+    scales: {
+      x: {
+        stacked: true,
+        ticks: {
+          color: '#fff',
+          font: {
+            size: 13,
+          }
+        }
+      },
+      y: {
+        stacked: true,
+        ticks: {
+          color: '#fff',
+          font: {
+            size: 13,
+          }
+        }
+      },
+    },
+  };
 
   async function createFile(url){
     let response = await fetch(`http://localhost:3001/${url}`);
@@ -65,9 +125,25 @@ function PostsAdmin(props) {
       retryError: false,
       refetchOnError: false,
       onSuccess: (data) => {
-        // data.map((item) => {
-        //   item.image_urls
-        // })
+        setChartLabels(data.map(post => post.slug))
+        const datasets = [
+          {
+            label: 'Likes',
+            backgroundColor: '#42A5F5',
+            borderColor: '#1E88E5',
+            data: data.map(post => post.likesDislikes.filter(like => like.liked).length),
+            stack: '0',
+          }, 
+          {
+            label: 'Dislikes',
+            backgroundColor: '#ff4d4d',
+            borderColor: '#ff3333',
+            data: data.map(post => -(post.likesDislikes.filter(like => !like.liked).length)),
+            stack: '1',
+          }
+        ]
+
+        setChartData(datasets)
       }
     }
   )
@@ -138,7 +214,7 @@ function PostsAdmin(props) {
     setFeaturedImageIndex(posts.find(post => post._id === id).featured_image_index)
     setFeaturedImageIndex(0)
     setIsPostUpdating(id)
-    debugger
+    
     let post = posts.find(post => post._id === id)
     let images = []
     Promise.all(post.image_urls.map(async (image) => {
@@ -437,6 +513,14 @@ function PostsAdmin(props) {
           :
           <></>
       }
+      <div className="chart-container flex justify-center" >
+        <div className="mb-20" style={{height: '30vh', width: '60vw'}}>
+          <Bar options={options} data={{
+            labels: chartLabels,
+            datasets: chartData
+          }} />
+        </div>
+      </div>
     </div>
   )
 }

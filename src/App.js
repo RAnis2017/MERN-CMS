@@ -59,7 +59,7 @@ const AppOutlet = ({ setPermissions }) => {
   return (
     <>
       <div>
-        <header className="sticky top-0 z-1000 bg-gray-800">
+        <header className="sticky top-0 z-50 bg-gray-800">
           <nav className="flex justify-start items-center p-4">
             <div className="flex items-center">
               <img src="https://www.gstatic.com/images/branding/product/1x/keep_48dp.png" alt="logo" className="w-8 h-8" />
@@ -97,11 +97,11 @@ const AppOutlet = ({ setPermissions }) => {
         <main className="my-20">
           <Outlet />
         </main>
-        <footer class="fixed inset-x-0 bottom-0 bg-gray-800">
+        {/* <footer class="fixed inset-x-0 bottom-0 bg-gray-800">
           <div className="flex justify-center items-center h-full">
             <span className="text-white text-center m-5">React CMS</span>
           </div>
-        </footer>
+        </footer> */}
       </div>
     </>
   );
