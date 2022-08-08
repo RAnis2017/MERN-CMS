@@ -249,7 +249,8 @@ router.put('/like-dislike-posts', (req, res, next) => {
         })
       } else {
         likeDislikeModel.updateOne({ postId, created_by }, {
-          liked
+          liked,
+          updated_date: new Date()
       }, (err, likeDislike) => {
           if (err) {
               console.log(err);
@@ -296,6 +297,21 @@ router.post('/create-tracking', (req, res, next) => {
       } else {
         res.status(200).json({ 'message': 'Tracking not updated' });
       }
+    }
+  })
+}
+)
+
+router.get('/get-trackings', (req, res, next) => {
+  let trackingModel = mongoose.model('Tracking')
+  let userModel = mongoose.model('User')
+  let postModel = mongoose.model('Post')
+  trackingModel.find({ }).populate({path:'created_by', model: userModel}).populate({path:'postId', model: postModel}).exec((err, trackings) => {
+    if (err) {
+      console.log(err);
+      res.status(500).json({ 'message': 'Internal server error' });
+    } else {
+      res.status(200).json(trackings);
     }
   })
 }

@@ -80,7 +80,7 @@ function UsersAdmin(props) {
         <>
         {
         permissions.map(permission => 
-        <>{permission.name}, <br /></>
+        <span key={permission.label}>{permission.name}, <br /></span>
         )
         }
         </>

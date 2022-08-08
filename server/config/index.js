@@ -12,6 +12,6 @@ module.exports = {
         can_see_categories: ['get-categories'],
         can_admin_posts: ['add-post', 'update-post', 'delete-post', 'change-status'],
         can_admin_categories: ['add-category', 'update-category', 'delete-category'],
-        can_admin_users: ['users', 'permissions', 'add-user-permission'],
+        can_admin_users: ['users', 'permissions', 'add-user-permission', 'get-trackings'],
     }
 }
