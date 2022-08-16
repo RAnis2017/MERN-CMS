@@ -20,6 +20,8 @@ import {
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 import { FileUploader } from "react-drag-drop-files";
+import DropdownTreeSelect from 'react-dropdown-tree-select'
+import 'react-dropdown-tree-select/dist/styles.css'
 
 const fileTypes = ["JPG", "PNG", "GIF"];
 
@@ -43,6 +45,32 @@ function PostsAdmin(props) {
   const [chartData, setChartData] = useState([])
   const queryClient = useQueryClient()
 
+  const data = {
+    label: 'search me',
+    value: 'searchme',
+    children: [
+      {
+        label: 'search me too',
+        value: 'searchmetoo',
+        children: [
+          {
+            label: 'No one can get me',
+            value: 'anonymous',
+          },
+        ],
+      },
+    ],
+  }
+  
+  const onChange = (currentNode, selectedNodes) => {
+    console.log('onChange::', currentNode, selectedNodes)
+  }
+  const onAction = (node, action) => {
+    console.log('onAction::', action, node)
+  }
+  const onNodeToggle = currentNode => {
+    console.log('onNodeToggle::', currentNode)
+  }
 
   //Chart JS Options
   ChartJS.register(
@@ -455,14 +483,17 @@ function PostsAdmin(props) {
                   <div className="flex justify-between content-center">
                   {
                     addCategoryFromPost === false ?
-                    <select className="input input-ghost w-full max-w-md" value={addPostCategory} onChange={(e) => setAddPostCategory(e.target.value)}>
-                      <option value={''}>Select Category</option>
-                      {
-                        categories.map(item => (
-                          <option key={item._id} value={item._id}>{item.name}</option>
-                        ))
-                      }
-                    </select> : 
+                    <>
+                      <DropdownTreeSelect data={data} className="input input-ghost w-full max-w-md treeView" onChange={onChange} onAction={onAction} onNodeToggle={onNodeToggle} />
+                      {/* <select className="input input-ghost w-full max-w-md" value={addPostCategory} onChange={(e) => setAddPostCategory(e.target.value)}>
+                        <option value={''}>Select Category</option>
+                        {
+                          categories.map(item => (
+                            <option key={item._id} value={item._id}>{item.name}</option>
+                          ))
+                        }
+                      </select>  */}
+                    </>: 
                     <input type="text" placeholder="Type here" value={addCategoryName} onChange={(e) => setAddCategoryName(e.target.value)} className="input input-ghost w-full max-w-md" />
                   }
                   
@@ -479,7 +510,7 @@ function PostsAdmin(props) {
                     </button>
                   </div>
                 </div>
-                <div className="form-control w-full max-w-md">
+                <div className="form-control w-full max-w-md mt-10">
                   <label className="label">
                     <span className="label-text text-white">Status</span>
                   </label>
