@@ -8,6 +8,7 @@ const jwt = require("jsonwebtoken");
 const config = require('../config');
 const adminRoutes = require('./admin');
 const ObjectId = require('mongodb').ObjectId;
+const fs = require('fs');
 
 //Middleware to log time for easy debugging when in development
 router.use(function timeLog(req, res, next) {
@@ -314,6 +315,32 @@ router.get('/get-trackings', (req, res, next) => {
       res.status(200).json(trackings);
     }
   })
+}
+)
+
+// Read CSV file from local and send data as response
+router.get('/airplane_crashes_data', (req, res, next) => {
+  let csvFilePath = './Airplane_Crashes_and_Fatalities_Since_1908.csv';
+  let csv = fs.readFileSync(csvFilePath, { encoding: 'utf8' });
+  let csvData = csv.split('\n');
+  let csvDataArray = [];
+  for (let i = 0; i < csvData.length; i++) {
+    csvDataArray.push(csvData[i].split(','));
+  }
+  csvDataArray = csvDataArray.slice(1);
+  const data = {};
+  csvDataArray.map(item => {
+    let year = item[0].split('/')[2];
+    if(year) {
+      if(data[year]) {
+        data[year] += 1;
+      } else {
+        data[year] = 1;
+      }
+    }
+  })
+
+  res.status(200).json(data);
 }
 )
 

@@ -219,7 +219,7 @@ router.put('/change-status/:id', (req, res, next) => {
 router.get('/users', (req, res, next) => {
     let userModel = mongoose.model('User');
     userModel.find({
-        email: { $ne: req.user.email }
+        // email: { $ne: req.user.email }
     }).populate('permissions').exec(async (err, users) => {
         if (err) {
             console.log(err);

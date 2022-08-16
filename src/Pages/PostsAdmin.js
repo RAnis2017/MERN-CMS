@@ -19,6 +19,9 @@ import {
   Legend,
 } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
+import { FileUploader } from "react-drag-drop-files";
+
+const fileTypes = ["JPG", "PNG", "GIF"];
 
 const clientId = '874157957573-9ghj35jep265q5u0ksfjr5mm22qmbb1k.apps.googleusercontent.com'
 
@@ -379,13 +382,13 @@ function PostsAdmin(props) {
       .replace(/ +/g, '-');
   }
 
-  const addImageToPost = (e) => {
-    setAddPostImage(e.target.files)
+  const addImageToPost = (files) => {
+    setAddPostImage(files)
     let images = []
-    for(let i = 0; i < e.target.files.length; i++) {
+    for(let i = 0; i < files.length; i++) {
       images.push({
-        name: e.target.files[i].name, 
-        image: URL.createObjectURL(e.target.files[i]), 
+        name: files[i].name, 
+        image: URL.createObjectURL(files[i]), 
       })
     }
 
@@ -496,9 +499,10 @@ function PostsAdmin(props) {
                   <label className="label">
                     <span className="label-text text-white">Image</span>
                   </label>
-                  <input type="file" multiple='multiple' accept='image/*' name='images' id='file'  placeholder="Insert Post Image" onChange={(e) => addImageToPost(e)} className="input input-ghost w-full max-w-md" />
+                  <FileUploader multiple={true} handleChange={addImageToPost} name="images" types={fileTypes} />
+                  {/* <input type="file" multiple='multiple' accept='image/*' name='images' id='file'  placeholder="Insert Post Image" onChange={(e) => addImageToPost(e)} className="input input-ghost w-full max-w-md" /> */}
                 </div>
-                <div className="flex flex-wrap">
+                <div className="flex flex-wrap mt-2">
                   {
                     uploadMultiple.map((image, index) => <span className="flex justify-center content-center  mr-2"><img
                     className={`${index === featuredImageIndex ? 'border-red-600' : 'border-red-400'}  hover:border-red-600 border-8`}

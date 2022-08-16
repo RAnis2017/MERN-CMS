@@ -22,6 +22,7 @@ import { useGoogleLogout } from "react-google-login";
 import TrackingInteractionsCount from "./Pages/Graphs/TrackingInteractionsCount";
 import LikeDislikeInteractions from "./Pages/Graphs/LikeDislikeInteractions";
 import PostsComparisionGraph from "./Pages/Graphs/PostsComparisionGraph";
+import AirplaneCrashesCSVGraph from "./Pages/Graphs/AirplaneCrashesCSVGraph";
 const clientId = '874157957573-9ghj35jep265q5u0ksfjr5mm22qmbb1k.apps.googleusercontent.com'
 
 const AppOutlet = ({ setPermissions }) => {
@@ -89,14 +90,34 @@ const AppOutlet = ({ setPermissions }) => {
                   <span className="">Posts</span>
                 </button>
               }
-              <div class="dropdown">
-                <label tabindex="0" class="hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-4">Graphs</label>
-                <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
-                  <li><a  onClick={() => navigate('/graphs/tracking-graph')}>Tracking Interactions</a></li>
-                  <li><a onClick={() => navigate('/graphs/like-dislike-interactions')}>Like Dislikes Interactions Posts</a></li>
-                  <li><a onClick={() => navigate('/graphs/posts-comparisions')}>Posts Comparisions</a></li>
-                </ul>
-              </div>
+              { 
+              permissionsList?.includes('can_see_post_like_dislike_graph') || 
+              permissionsList?.includes('can_see_post_comparison_graph') ||
+              permissionsList?.includes('can_see_airplane_crashes_graph') ||
+              permissionsList?.includes('can_see_tracking_interaction_graph') ?
+                <div class="dropdown">
+                  <label tabindex="0" class="hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-4">Graphs</label>
+                  <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
+                    {
+                      permissionsList?.includes('can_see_tracking_interaction_graph') &&
+                      <li><a  onClick={() => navigate('/graphs/tracking-graph')}>Tracking Interactions</a></li>
+                    }
+                    {
+                      permissionsList?.includes('can_see_post_like_dislike_graph') &&
+                      <li><a onClick={() => navigate('/graphs/like-dislike-interactions')}>Like Dislikes Interactions Posts</a></li>
+                    }
+                    {
+                      permissionsList?.includes('can_see_post_comparison_graph') &&
+                      <li><a onClick={() => navigate('/graphs/posts-comparisions')}>Posts Comparisons</a></li>
+                    }
+                    {
+                      permissionsList?.includes('can_see_airplane_crashes_graph') &&
+                      <li><a onClick={() => navigate('/graphs/airplane-crashes-per-year')}>Airplane Crashes Per Year</a></li>
+                    }
+                  </ul>
+                </div>
+              : <></>
+              }
             </div>
             <div className="flex items-center ml-auto">
               <button className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded" onClick={() => signOut()}>
@@ -158,6 +179,7 @@ function App({ setPermissions }) {
             <Route path="graphs/tracking-graph" element={<TrackingInteractionsCount />} />
             <Route path="graphs/like-dislike-interactions" element={<LikeDislikeInteractions />} />
             <Route path="graphs/posts-comparisions" element={<PostsComparisionGraph />} />
+            <Route path="graphs/airplane-crashes-per-year" element={<AirplaneCrashesCSVGraph />} />
           </Route>
           <Route path="*" element={<Login />} />
         </Routes>

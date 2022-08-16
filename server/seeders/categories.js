@@ -1,4 +1,4 @@
-const { Permission } = require('../models/permissions');
+const { Category } = require('../models/categories');
 const mongoose = require("mongoose");
 const config = require('../config')
 
@@ -6,13 +6,10 @@ const start = async () => {
     try {
         await mongoose.connect(`mongodb://${config.db.user}:${config.db.password}@localhost:${config.db.port}/${config.db.dbName}`);
 
-        // Permission.remove({}, function () {
-        //     console.log('Permissions Database Cleared');
-        // });
-
-        await Permission.create({
-            name: 'Airplane Crashes Per Year Graph',
-            label: 'can_see_airplane_crashes_graph'
+        await Category.create({
+            name: 'Child Category',
+            parent: '62d845b070ae70226a010620',
+            created_by: '62c31bbed614d5b71ab0dfd1',
         });
 
         await mongoose.connection.close()
