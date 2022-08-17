@@ -17,6 +17,7 @@ const verifyToken = (req, res, next) => {
       if(url.includes('/admin')){
         url = url.replace('/admin', '')
       }
+      url = url.split('?')[0]
       url = url.split("/")[1];
       if((config.PERMISSIONS[permission.label] && config.PERMISSIONS[permission.label].includes(url)) || url.includes('get-user-permissions')) {
         isAuthorized = true;

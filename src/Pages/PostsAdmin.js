@@ -44,32 +44,9 @@ function PostsAdmin(props) {
   const [chartLabels, setChartLabels] = useState([])
   const [chartData, setChartData] = useState([])
   const queryClient = useQueryClient()
-
-  const data = {
-    label: 'search me',
-    value: 'searchme',
-    children: [
-      {
-        label: 'search me too',
-        value: 'searchmetoo',
-        children: [
-          {
-            label: 'No one can get me',
-            value: 'anonymous',
-          },
-        ],
-      },
-    ],
-  }
   
   const onChange = (currentNode, selectedNodes) => {
     console.log('onChange::', currentNode, selectedNodes)
-  }
-  const onAction = (node, action) => {
-    console.log('onAction::', action, node)
-  }
-  const onNodeToggle = currentNode => {
-    console.log('onNodeToggle::', currentNode)
   }
 
   //Chart JS Options
@@ -132,19 +109,6 @@ function PostsAdmin(props) {
     return file
   }
 
-  const { isLoading: categoriesLoading, isSuccess: categoriesSuccess, data: categories } = useQuery('categories', () =>
-    fetchFunc('http://localhost:3001/get-categories', 'GET', {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      'x-access-token': localStorage.getItem('token'),
-    }, null, navigate, 'readAllCategories'),
-    {
-      refetchOnWindowFocus: false,
-      retryError: false,
-      refetchOnError: false
-    }
-  )
-
   const { isLoading: postsLoading, isSuccess: postsSuccess, data: posts } = useQuery('posts', () =>
     fetchFunc('http://localhost:3001/get-posts', 'GET', {
       'Accept': 'application/json',
@@ -176,6 +140,20 @@ function PostsAdmin(props) {
 
         setChartData(datasets)
       }
+    }
+  )
+
+  const { isLoading: categoriesLoading, isSuccess: categoriesSuccess, data: categories } = useQuery(['categories', addPostCategory], () => {
+    return fetchFunc('http://localhost:3001/get-categories?id='+addPostCategory, 'GET', {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'x-access-token': localStorage.getItem('token'),
+    }, null, navigate, 'readAllCategories')
+    },
+    {
+      refetchOnWindowFocus: false,
+      retryError: false,
+      refetchOnError: false
     }
   )
 
@@ -484,15 +462,11 @@ function PostsAdmin(props) {
                   {
                     addCategoryFromPost === false ?
                     <>
-                      <DropdownTreeSelect data={data} className="input input-ghost w-full max-w-md treeView" onChange={onChange} onAction={onAction} onNodeToggle={onNodeToggle} />
-                      {/* <select className="input input-ghost w-full max-w-md" value={addPostCategory} onChange={(e) => setAddPostCategory(e.target.value)}>
-                        <option value={''}>Select Category</option>
-                        {
-                          categories.map(item => (
-                            <option key={item._id} value={item._id}>{item.name}</option>
-                          ))
-                        }
-                      </select>  */}
+                      {
+                        categories?.length > 0 ?
+                        <DropdownTreeSelect data={categories} className="input input-ghost w-full max-w-md treeView" onChange={(e) => setAddPostCategory(e.value)} />
+                        : <></>
+                      }
                     </>: 
                     <input type="text" placeholder="Type here" value={addCategoryName} onChange={(e) => setAddCategoryName(e.target.value)} className="input input-ghost w-full max-w-md" />
                   }

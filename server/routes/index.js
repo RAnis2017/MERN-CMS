@@ -145,6 +145,26 @@ router.post('/login', function (req, res) {
 
 router.use(auth);
 
+function nestedCategories(categories, parentId = null, checkedId = null) {
+  const categoryList = [];
+  let category;
+  if (parentId == null) {
+      category = categories.filter(cat => cat.parent== null);
+  } else {
+      category = categories.filter(cat => String(cat.parent) == String(parentId));
+  }
+
+  for (let cate of category) {
+      categoryList.push({
+          label: cate.name,
+          value: cate._id,
+          checked: checkedId == cate._id ? true : false,
+          children: nestedCategories(categories, cate._id, checkedId)
+      })
+  }
+  return categoryList;
+}
+
 router.get('/get-categories', (req, res, next) => {
   let categoryModel = mongoose.model('Category');
   categoryModel.find({}, (err, categories) => {
@@ -152,7 +172,12 @@ router.get('/get-categories', (req, res, next) => {
       console.log(err);
       res.status(500).json({ 'message': 'Internal server error' });
     } else {
-      res.status(200).json(categories);
+      if(req.query.admin) {
+        res.status(200).json(categories);
+      } else {
+        let categoryList = nestedCategories(categories, null, req.query.id);
+        res.status(200).json(categoryList);
+      }
     }
   })
 })

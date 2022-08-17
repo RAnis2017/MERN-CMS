@@ -16,7 +16,7 @@ function CategoriesAdmin(props) {
   const queryClient = useQueryClient()
 
   const { isLoading: categoriesLoading, isSuccess: categoriesSuccess, data: categories } = useQuery('categories', () =>
-    fetchFunc('http://localhost:3001/get-categories', 'GET', {
+    fetchFunc('http://localhost:3001/get-categories?admin=true', 'GET', {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
       'x-access-token': localStorage.getItem('token'),
