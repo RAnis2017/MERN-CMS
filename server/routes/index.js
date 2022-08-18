@@ -9,12 +9,7 @@ const config = require('../config');
 const adminRoutes = require('./admin');
 const ObjectId = require('mongodb').ObjectId;
 const fs = require('fs');
-
-//Middleware to log time for easy debugging when in development
-router.use(function timeLog(req, res, next) {
-  console.log('Time: ', Date().toLocaleString());
-  next();
-});
+const { sendMessage } = require('../config/socket-io');
 
 // Define the home page route
 router.get('/', function (req, res) {
@@ -71,6 +66,7 @@ router.post('/login-google', function (req, res) {
       );
       let loggedInUser = {
         token,
+        isAdmin: email === 'admin@email.com',
         email
       };
 
@@ -93,6 +89,7 @@ router.post('/login-google', function (req, res) {
         let loggedInUser = {
           token,
           email,
+          isAdmin: email === 'admin@email.com',
           permissions: user.permissions
         };
 
@@ -133,6 +130,7 @@ router.post('/login', function (req, res) {
           let loggedInUser = {
             token,
             email,
+            isAdmin: email === 'admin@email.com',
             permissions: user.permissions
           };
 
@@ -250,45 +248,61 @@ router.get('/get-user-permissions', (req, res, next) => {
 
 router.put('/like-dislike-posts', (req, res, next) => {
   let likeDislikeModel = mongoose.model('LikeDislike')
+  let postModel = mongoose.model('Post');
   const postId = req.body.postId
   const created_by = req.user.user_id
   const liked = req.body.isLiked
-  likeDislikeModel.findOne({
-    created_by,
-    postId
-  }, (err, likeDislikes) => {
-    if(err) {
+  const session = req.session;
+
+  // get post 
+  postModel.findById(postId, (err, post) => {
+    if (err) {
       console.log(err);
       res.status(500).json({ 'message': 'Internal server error' });
     } else {
-      if(!likeDislikes) {
-        likeDislikeModel.create({
-          postId,
-          created_by,
-          liked
-        }, (err, likeDislikes) => {
-          if(err) {
-            console.log(err);
-            res.status(500).json({ 'message': 'Internal server error' });
-          }
-          res.status(200).json(likeDislikes)
-        })
-      } else {
-        likeDislikeModel.updateOne({ postId, created_by }, {
-          liked,
-          updated_date: new Date()
-      }, (err, likeDislike) => {
-          if (err) {
-              console.log(err);
-              res.status(500).json({ 'message': 'Internal server error' });
+      // check if user has already liked/disliked the post
+
+      likeDislikeModel.findOne({
+        created_by,
+        postId
+      }, (err, likeDislikes) => {
+        if (err) {
+          console.log(err);
+          res.status(500).json({ 'message': 'Internal server error' });
+        } else {
+          if (!likeDislikes) {
+            likeDislikeModel.create({
+              postId,
+              created_by,
+              liked
+            }, (err, likeDislikes) => {
+              if (err) {
+                console.log(err);
+                res.status(500).json({ 'message': 'Internal server error' });
+              }
+              
+              sendMessage(JSON.stringify({message: `${req.user.email} ${liked ? 'liked' : 'disliked'} your post ${post.name}`, isAdmin: req.user.email === 'admin@email.com', user: created_by}), 'new_like_dislike', session);
+              res.status(200).json(likeDislikes)
+            })
           } else {
-              res.status(200).json({ 'message': 'LikeDislike updated' });
+            likeDislikeModel.updateOne({ postId, created_by }, {
+              liked,
+              updated_date: new Date()
+            }, (err, likeDislike) => {
+              if (err) {
+                console.log(err);
+                res.status(500).json({ 'message': 'Internal server error' });
+              } else {
+
+                sendMessage(JSON.stringify({message: `${req.user.email} ${liked ? 'liked' : 'disliked'} your post ${post.name}`, isAdmin: req.user.email === 'admin@email.com', user: created_by}), 'new_like_dislike', session);
+                res.status(200).json({ 'message': 'LikeDislike updated' });
+              }
+            })
           }
+        }
       })
-      }
     }
   })
-  
 })
 
 router.post('/create-tracking', (req, res, next) => {

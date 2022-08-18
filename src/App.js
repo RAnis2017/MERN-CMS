@@ -1,4 +1,4 @@
-import React, { useEffect } from "react"
+import React, { useEffect, useState } from "react"
 import "./App.css"
 import { connect } from "react-redux"
 import {
@@ -23,6 +23,9 @@ import TrackingInteractionsCount from "./Pages/Graphs/TrackingInteractionsCount"
 import LikeDislikeInteractions from "./Pages/Graphs/LikeDislikeInteractions";
 import PostsComparisionGraph from "./Pages/Graphs/PostsComparisionGraph";
 import AirplaneCrashesCSVGraph from "./Pages/Graphs/AirplaneCrashesCSVGraph";
+import io from 'socket.io-client';
+const socket = io();
+
 const clientId = '874157957573-9ghj35jep265q5u0ksfjr5mm22qmbb1k.apps.googleusercontent.com'
 
 const AppOutlet = ({ setPermissions }) => {
@@ -47,6 +50,7 @@ const AppOutlet = ({ setPermissions }) => {
   const onLogoutSuccess = () => {
     localStorage.removeItem('token')
     localStorage.removeItem('email')
+    localStorage.removeItem('admin')
     navigate('/')
   }
 
@@ -95,9 +99,9 @@ const AppOutlet = ({ setPermissions }) => {
               permissionsList?.includes('can_see_post_comparison_graph') ||
               permissionsList?.includes('can_see_airplane_crashes_graph') ||
               permissionsList?.includes('can_see_tracking_interaction_graph') ?
-                <div class="dropdown">
-                  <label tabindex="0" class="hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-4">Graphs</label>
-                  <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
+                <div className="dropdown">
+                  <label tabIndex="0" className="hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-4">Graphs</label>
+                  <ul tabIndex="0" className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
                     {
                       permissionsList?.includes('can_see_tracking_interaction_graph') &&
                       <li><a  onClick={() => navigate('/graphs/tracking-graph')}>Tracking Interactions</a></li>
@@ -140,6 +144,42 @@ const AppOutlet = ({ setPermissions }) => {
 };
 
 function App({ setPermissions }) {
+  const [socket, setSocket] = useState(null)
+  useEffect(() => {
+    const newSocket = io('http://localhost:3001',{reconnection:false})
+    setSocket(newSocket)
+
+    newSocket.on('connect', ()=>{
+      console.log(newSocket.id)
+    })
+    newSocket.on('connect_error', ()=>{
+      setTimeout(()=>newSocket.connect(), 5000)
+    })
+
+    newSocket.on('new_like_dislike', (data) => {
+      console.log(data)
+      const isAdmin = localStorage.getItem('admin')
+      let parsed = JSON.parse(data)
+      if(isAdmin === 'true' && parsed.isAdmin === false){
+        toast.success(parsed.message, {
+          position: "top-right",
+          autoClose: 3000,
+          hideProgressBar: true,
+          closeOnClick: false,
+          pauseOnHover: false,
+          draggable: false,
+          progress: undefined,
+        });
+      }
+    })
+    
+    newSocket.on('disconnect',()=>console.log('disconnected'))
+
+    return () => {
+      if(newSocket) newSocket.disconnect()
+    }
+  }, []);
+
 
   useEffect(() => {
     // subscribe to home component messages

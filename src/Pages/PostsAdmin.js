@@ -33,6 +33,7 @@ function PostsAdmin(props) {
   const [addPostTitle, setAddPostTitle] = useState('')
   const [addPostDescription, setAddPostDescription] = useState('')
   const [addPostCategory, setAddPostCategory] = useState('')
+  const [addParentCategory, setAddParentCategory] = useState('')
   const [addPostImage, setAddPostImage] = useState('')
   const [addPostStatus, setAddPostStatus] = useState('')
   const [addCategoryName, setAddCategoryName] = useState('')
@@ -145,6 +146,20 @@ function PostsAdmin(props) {
 
   const { isLoading: categoriesLoading, isSuccess: categoriesSuccess, data: categories } = useQuery(['categories', addPostCategory], () => {
     return fetchFunc('http://localhost:3001/get-categories?id='+addPostCategory, 'GET', {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'x-access-token': localStorage.getItem('token'),
+    }, null, navigate, 'readAllCategories')
+    },
+    {
+      refetchOnWindowFocus: false,
+      retryError: false,
+      refetchOnError: false
+    }
+  )
+
+  const { isLoading: categoriesAdminLoading, isSuccess: categoriesAdminIsSuccess, data: categoriesAdmin } = useQuery('categories', () => {
+    return fetchFunc('http://localhost:3001/get-categories?admin=true', 'GET', {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
       'x-access-token': localStorage.getItem('token'),
@@ -405,9 +420,10 @@ function PostsAdmin(props) {
   const setAddCategoryFromPostConditions = () => {
 
     if(addCategoryFromPost && addCategoryName.length > 0) {
-      categoryMutate({ name: addCategoryName })
+      categoryMutate({ name: addCategoryName, parent: addParentCategory })
 
       setAddCategoryName('')
+      setAddParentCategory('')
 
       setTimeout(() => {
         setAddPostCategory(categories[categories.length - 1]._id)
@@ -468,7 +484,17 @@ function PostsAdmin(props) {
                         : <></>
                       }
                     </>: 
-                    <input type="text" placeholder="Type here" value={addCategoryName} onChange={(e) => setAddCategoryName(e.target.value)} className="input input-ghost w-full max-w-md" />
+                    <>
+                      <input type="text" placeholder="Type here" value={addCategoryName} onChange={(e) => setAddCategoryName(e.target.value)} className="input input-ghost w-full max-w-md" />
+                      <select className="input input-ghost w-full max-w-md" value={addParentCategory} onChange={(e) => setAddParentCategory(e.target.value)}>
+                          <option value={''}>Select Parent Category</option>
+                          {
+                            categoriesAdmin.map(item => (
+                              <option key={item._id} value={item._id}>{item.name}</option>
+                            ))
+                          }
+                        </select>
+                      </>
                   }
                   
                     <button className="btn btn-circle ml-3" onClick={() => setAddCategoryFromPostConditions()}>

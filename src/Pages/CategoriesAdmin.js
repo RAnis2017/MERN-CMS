@@ -12,6 +12,7 @@ function CategoriesAdmin(props) {
   const [addCategoryClicked, setAddCategoryClicked] = useState(false)
   const [addCategoryName, setAddCategoryName] = useState('')
   const [isCategoryUpdating, setIsCategoryUpdating] = useState(false)
+  const [addParentCategory, setAddParentCategory] = useState('')
 
   const queryClient = useQueryClient()
 
@@ -68,7 +69,12 @@ function CategoriesAdmin(props) {
 
   const editCall = (id) => {
     setAddCategoryClicked(true)
-    setAddCategoryName(categories.find(category => category._id === id).name)
+    let categoryFound = categories.find(category => category._id === id)
+    setAddCategoryName(categoryFound.name)
+    let categoryParentFound = categories.find(category => category._id === categoryFound.parent)
+    if(categoryParentFound) {
+      setAddParentCategory(categoryParentFound._id)
+    }
     setIsCategoryUpdating(id)
   }
 
@@ -147,12 +153,12 @@ function CategoriesAdmin(props) {
 
   const saveNewCategory = () => {
     if (isCategoryUpdating) {
-      categoryUpdateMutate({ name: addCategoryName })
+      categoryUpdateMutate({ name: addCategoryName, parent: addParentCategory })
     } else {
-      categoryMutate({ name: addCategoryName })
+      categoryMutate({ name: addCategoryName, parent: addParentCategory })
     }
   }
-  
+
   return (
     <div>
       <div className="flex justify-around flex-row flex-wrap">
@@ -192,6 +198,16 @@ function CategoriesAdmin(props) {
                     <span className="label-text text-white">Name</span>
                   </label>
                   <input type="text" placeholder="Type here" value={addCategoryName} onChange={(e) => setAddCategoryName(e.target.value)} className="input input-ghost w-full max-w-md" />
+                </div>
+                <div className="form-control w-full max-w-md">
+                  <select className="input input-ghost w-full max-w-md" value={addParentCategory} onChange={(e) => setAddParentCategory(e.target.value)}>
+                    <option value={''}>Select Parent Category</option>
+                    {
+                      categories.map(item => (
+                        <option key={item._id} value={item._id}>{item.name}</option>
+                      ))
+                    }
+                  </select>
                 </div>
               </div>
             </div>

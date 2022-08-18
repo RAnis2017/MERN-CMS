@@ -35,6 +35,7 @@ function Login(props) {
      ), {
       onSuccess: (data, variables, context) => {
         setTokenAction(data.token)
+        localStorage.setItem('admin', data.isAdmin);
         navigate("/posts");
       }
      }
@@ -56,6 +57,7 @@ function Login(props) {
     ), {
     onSuccess: (data, variables, context) => {
       setTokenAction(data.token)
+      localStorage.setItem('admin', data.isAdmin);
       navigate('/posts');
     }
     }
@@ -115,8 +117,8 @@ function Login(props) {
             <input type="password" placeholder="Type here" value={passwordField} onChange={(e) => setPasswordField((prev) => e.target.value)}  className="input input-ghost w-full max-w-md" />
           </div>
         </div>
-        <button class="btn btn-accent mt-5" onClick={() => manualLogin()}>Login</button>
-        <GoogleLogin className="mt-5" clientId={clientID} buttonText='Google Login' onSuccess={onSuccess} onFailure={onFailure} isSignedIn={true} cookiePolicy={'single_host_origin'} class="btn btn-ghost mt-5 text-white"></GoogleLogin>
+        <button className="btn btn-accent mt-5" onClick={() => manualLogin()}>Login</button>
+        <GoogleLogin className="btn btn-ghost mt-5 text-white" clientId={clientID} buttonText='Google Login' onSuccess={onSuccess} onFailure={onFailure} isSignedIn={true} cookiePolicy={'single_host_origin'}></GoogleLogin>
         {
           isLoadingGoogle || isLoadingManual ?
           <div className="text-white mt-5">Loading...</div>

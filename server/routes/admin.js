@@ -99,6 +99,7 @@ router.post('/add-category', (req, res, next) => {
     categoryModel.create({
         name: req.body.name,
         created_by: req.user.user_id,
+        parent: req.body.parent?.length > 0 ? req.body.parent : null,
     }, (err, category) => {
         if (err) {
             console.log(err);
@@ -160,6 +161,7 @@ router.put('/update-category/:id', (req, res, next) => {
     let categoryModel = mongoose.model('Category');
     categoryModel.updateOne({ _id: req.params.id }, {
         name: req.body.name,
+        parent: req.body.parent?.length > 0 ? req.body.parent : null,
     }, (err, category) => {
         if (err) {
             console.log(err);

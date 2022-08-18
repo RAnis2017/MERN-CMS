@@ -74,7 +74,7 @@ function Posts(props) {
       <div className="posts-container flex justify-center content-center flex-wrap flex-col">
         {isPostsLoading ? <p>Loading...</p> : null}
         {isPostsError ? <p>Error</p> : null}
-        {posts?.length && posts?.map(post => (
+        {posts?.length && posts?.map((post) => (
           <div className="post-container p-5 bg-white max-w-4xl rounded-xl shadow-xl mb-10" key={post._id} onMouseOver={() => trackingInfoCapture(post._id, 'post-hovered')}>
             <div className="post-title text-2xl flex justify-between">
               <h1>{post.name}</h1>
@@ -103,6 +103,7 @@ function Posts(props) {
               {
                 post?.image_urls?.map((image, index) =>  <img 
                 src={`http://localhost:3001/${image}`} 
+                key={index}
                 className="rounded-lg shadow-lg mr-2" alt={post.slug}
                 width="200" />
                 )
