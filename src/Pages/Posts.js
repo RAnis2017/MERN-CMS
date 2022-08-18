@@ -13,6 +13,18 @@ function Posts(props) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
+  const { isLoading: categoriesLoading, isSuccess: categoriesSuccess, data: categories } = useQuery('categories', () =>
+  fetchFunc('http://localhost:3001/get-categories?admin=true', 'GET', {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+    'x-access-token': localStorage.getItem('token'),
+  }, null, navigate, 'readAllCategories'),
+  {
+    refetchOnWindowFocus: false,
+    retryError: false,
+    refetchOnError: false
+  }
+  )
 
   const { data: posts, isLoading: isPostsLoading, isError: isPostsError } = useQuery('posts', () => 
     fetchFunc(`http://localhost:3001/get-posts`, 'GET', {
@@ -69,6 +81,19 @@ function Posts(props) {
     }, 1000)
   }
 
+  const getHierarchyOfCategory = (categoryId) => {
+    let categoryFound = categories.find(category => category._id === categoryId)
+    if(categoryFound) {
+      if(categoryFound.parent) {
+        return getHierarchyOfCategory(categoryFound.parent) + ' > ' + categoryFound.name
+      } else {
+        return categoryFound.name
+      }
+    } else {
+      return ''
+    }
+  }
+
   return (
     <div>
       <div className="posts-container flex justify-center content-center flex-wrap flex-col">
@@ -92,7 +117,8 @@ function Posts(props) {
             </div>
             <div className="post-category">
               <FontAwesomeIcon icon={faDna} className="mr-5" />
-              {post.category.name}
+              {/* {post.category.name} */}
+              {getHierarchyOfCategory(post.category._id)}
             </div>
             <div className="post-img flex justify-center content-center mt-5">
               <img src={`http://localhost:3001/${post.image_urls?.[post.featured_image_index]}`} className="rounded-lg shadow-lg" alt={post.slug} />
